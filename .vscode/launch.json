@@ -1,0 +1,37 @@
+{
+        "version": "0.2.0",
+        "configurations": [
+                {
+                        "name": "login",
+                        "type": "go",
+                        "request": "launch",
+                        "mode": "auto",
+                        "program": "${workspaceFolder}",
+                        "args": [
+                                "login",
+                                "--plaintext",
+                                "--address=localhost:8000"
+                        ]
+                },
+                {
+                        "name": "logout",
+                        "type": "go",
+                        "request": "launch",
+                        "mode": "auto",
+                        "program": "${workspaceFolder}",
+                        "args": [
+                                "logout"
+                        ]
+                },
+                {
+                        "name": "get templates",
+                        "type": "go",
+                        "request": "launch",
+                        "mode": "auto",
+                        "program": "${workspaceFolder}",
+                        "args": [
+                                "get", "templates"
+                        ]
+                },
+        ]
+}
