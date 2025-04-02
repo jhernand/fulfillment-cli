@@ -20,9 +20,11 @@ import (
 	"os"
 	"path/filepath"
 
+	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/credentials/oauth"
 )
 
 // Config is the type used to store the configuration of the client.
@@ -101,6 +103,8 @@ func Location() (result string, err error) {
 // Connect creates a gRPC connection from the configuration.
 func (c *Config) Connect() (result *grpc.ClientConn, err error) {
 	var dialOpts []grpc.DialOption
+
+	// Configure use of TLS:
 	var transportCreds credentials.TransportCredentials
 	if c.Plaintext {
 		transportCreds = insecure.NewCredentials()
@@ -114,6 +118,18 @@ func (c *Config) Connect() (result *grpc.ClientConn, err error) {
 	if transportCreds != nil {
 		dialOpts = append(dialOpts, grpc.WithTransportCredentials(transportCreds))
 	}
+
+	// Confgure use of token:
+	if c.Token != "" {
+		token := &oauth2.Token{
+			AccessToken: c.Token,
+		}
+		creds := oauth.TokenSource{
+			TokenSource: oauth2.StaticTokenSource(token),
+		}
+		dialOpts = append(dialOpts, grpc.WithPerRPCCredentials(creds))
+	}
+
 	result, err = grpc.NewClient(c.Address, dialOpts...)
 	return
 }
