@@ -25,6 +25,8 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/credentials/oauth"
+
+	experiementalcredentials "google.golang.org/grpc/experimental/credentials"
 )
 
 // Config is the type used to store the configuration of the client.
@@ -113,7 +115,16 @@ func (c *Config) Connect() (result *grpc.ClientConn, err error) {
 		if c.Insecure {
 			tlsConfig.InsecureSkipVerify = true
 		}
-		transportCreds = credentials.NewTLS(tlsConfig)
+
+		// TODO: This should have been the non-experimental package, but we need to use this one because
+		// currently the OpenShift router doesn't seem to support ALPN, and the regular credentials package
+		// requires it since version 1.67. See here for details:
+		//
+		// https://github.com/grpc/grpc-go/issues/434
+		// https://github.com/grpc/grpc-go/pull/7980
+		//
+		// Is there a way to configure the OpenShift router to avoid this?
+		transportCreds = experiementalcredentials.NewTLSWithALPNDisabled(tlsConfig)
 	}
 	if transportCreds != nil {
 		dialOpts = append(dialOpts, grpc.WithTransportCredentials(transportCreds))
