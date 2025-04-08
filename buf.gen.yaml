@@ -24,9 +24,7 @@ managed:
 
 inputs:
 
-- git_repo: https://github.com/jhernand/fulfillment-api.git
-  branch: main
-  subdir: proto
+- module: buf.build/innabox/fulfillment-api:v0.0.6
 
 plugins:
 
@@ -34,6 +32,7 @@ plugins:
   out: internal/api
   opt:
   - paths=source_relative
+  - default_api_level=API_HYBRID
 
 - remote: buf.build/grpc/go:v1.5.1
   out: internal/api

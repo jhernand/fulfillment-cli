@@ -17,7 +17,7 @@
 // 	protoc        (unknown)
 // source: shared/v1/condition_status_type.proto
 
-//go:build !protoopaque
+//go:build protoopaque
 
 package sharedv1
 

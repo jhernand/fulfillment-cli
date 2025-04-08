@@ -17,7 +17,7 @@
 // 	protoc        (unknown)
 // source: fulfillment/v1/cluster_type.proto
 
-//go:build !protoopaque
+//go:build protoopaque
 
 package fulfillmentv1
 
@@ -154,14 +154,13 @@ func (x ClusterConditionType) Number() protoreflect.EnumNumber {
 // The `spec` contains the desired details, and may be modified by the user. The `status` contains the current status of
 // the cluster, is provided by the system and can't be modified by the user.
 type Cluster struct {
-	state protoimpl.MessageState `protogen:"hybrid.v1"`
-	// Unique identifier of the cluster.
-	Id            string         `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Metadata      *v1.Metadata   `protobuf:"bytes,2,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	Spec          *ClusterSpec   `protobuf:"bytes,3,opt,name=spec,proto3" json:"spec,omitempty"`
-	Status        *ClusterStatus `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state               protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id       string                 `protobuf:"bytes,1,opt,name=id,proto3"`
+	xxx_hidden_Metadata *v1.Metadata           `protobuf:"bytes,2,opt,name=metadata,proto3"`
+	xxx_hidden_Spec     *ClusterSpec           `protobuf:"bytes,3,opt,name=spec,proto3"`
+	xxx_hidden_Status   *ClusterStatus         `protobuf:"bytes,4,opt,name=status,proto3"`
+	unknownFields       protoimpl.UnknownFields
+	sizeCache           protoimpl.SizeCache
 }
 
 func (x *Cluster) Reset() {
@@ -191,79 +190,79 @@ func (x *Cluster) ProtoReflect() protoreflect.Message {
 
 func (x *Cluster) GetId() string {
 	if x != nil {
-		return x.Id
+		return x.xxx_hidden_Id
 	}
 	return ""
 }
 
 func (x *Cluster) GetMetadata() *v1.Metadata {
 	if x != nil {
-		return x.Metadata
+		return x.xxx_hidden_Metadata
 	}
 	return nil
 }
 
 func (x *Cluster) GetSpec() *ClusterSpec {
 	if x != nil {
-		return x.Spec
+		return x.xxx_hidden_Spec
 	}
 	return nil
 }
 
 func (x *Cluster) GetStatus() *ClusterStatus {
 	if x != nil {
-		return x.Status
+		return x.xxx_hidden_Status
 	}
 	return nil
 }
 
 func (x *Cluster) SetId(v string) {
-	x.Id = v
+	x.xxx_hidden_Id = v
 }
 
 func (x *Cluster) SetMetadata(v *v1.Metadata) {
-	x.Metadata = v
+	x.xxx_hidden_Metadata = v
 }
 
 func (x *Cluster) SetSpec(v *ClusterSpec) {
-	x.Spec = v
+	x.xxx_hidden_Spec = v
 }
 
 func (x *Cluster) SetStatus(v *ClusterStatus) {
-	x.Status = v
+	x.xxx_hidden_Status = v
 }
 
 func (x *Cluster) HasMetadata() bool {
 	if x == nil {
 		return false
 	}
-	return x.Metadata != nil
+	return x.xxx_hidden_Metadata != nil
 }
 
 func (x *Cluster) HasSpec() bool {
 	if x == nil {
 		return false
 	}
-	return x.Spec != nil
+	return x.xxx_hidden_Spec != nil
 }
 
 func (x *Cluster) HasStatus() bool {
 	if x == nil {
 		return false
 	}
-	return x.Status != nil
+	return x.xxx_hidden_Status != nil
 }
 
 func (x *Cluster) ClearMetadata() {
-	x.Metadata = nil
+	x.xxx_hidden_Metadata = nil
 }
 
 func (x *Cluster) ClearSpec() {
-	x.Spec = nil
+	x.xxx_hidden_Spec = nil
 }
 
 func (x *Cluster) ClearStatus() {
-	x.Status = nil
+	x.xxx_hidden_Status = nil
 }
 
 type Cluster_builder struct {
@@ -280,10 +279,10 @@ func (b0 Cluster_builder) Build() *Cluster {
 	m0 := &Cluster{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.Id = b.Id
-	x.Metadata = b.Metadata
-	x.Spec = b.Spec
-	x.Status = b.Status
+	x.xxx_hidden_Id = b.Id
+	x.xxx_hidden_Metadata = b.Metadata
+	x.xxx_hidden_Spec = b.Spec
+	x.xxx_hidden_Status = b.Status
 	return m0
 }
 
@@ -291,7 +290,7 @@ func (b0 Cluster_builder) Build() *Cluster {
 //
 // Note that currently this is empty because there are no properties of the cluster that can be modified by the user.
 type ClusterSpec struct {
-	state         protoimpl.MessageState `protogen:"hybrid.v1"`
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -335,56 +334,13 @@ func (b0 ClusterSpec_builder) Build() *ClusterSpec {
 
 // The status contains the details of the cluster provided by the system.
 type ClusterStatus struct {
-	state protoimpl.MessageState `protogen:"hybrid.v1"`
-	// Indicates the overall state of the cluster.
-	State ClusterState `protobuf:"varint,1,opt,name=state,proto3,enum=fulfillment.v1.ClusterState" json:"state,omitempty"`
-	// Contains a list of conditions that describe in detail the status of the cluster.
-	//
-	// For example, an cluster that is ready could be represented like this (when converted to JSON):
-	//
-	//	{
-	//	  "id": "123",
-	//	  "spec": {
-	//	  },
-	//	  "status": {
-	//	    "state": "CLUSTER_STATE_READY",
-	//	    "conditions": [
-	//	      {
-	//	        "type": "CLUSTER_CONDITION_TYPE_READY",
-	//	        "status": "CONDITION_STATUS_TRUE",
-	//	        "last_transition_time": "2025-03-12 20:15:59+00:00",
-	//	        "message": "The cluster is ready to use",
-	//	      },
-	//	      {
-	//	        "type": "CLUSTER_CONDITION_TYPE_FAILED",
-	//	        "status": "CONDITION_STATUS_FALSE",
-	//	        "last_transition_time": "2025-03-12 20:10:59+00:00"
-	//	      }
-	//	    ]
-	//	  }
-	//	}
-	//
-	// In this example the `READY` condition is true. That tells us that the cluster is ready to use via the API URL
-	// provided in the `status.api_url` field.
-	//
-	// The `FAILED` condition is false. That tells us that the cluster is *not* failed.
-	//
-	// Note that in this example, to make it shorter, only one condition appears. In general all the conditions (except
-	// `UNSPECIFIED`) will appear exactly once.
-	//
-	// Check the documentation of the values of the `ClusterConditionType` enumerated type to see possible conditions and
-	// reasons.
-	Conditions []*ClusterCondition `protobuf:"bytes,2,rep,name=conditions,proto3" json:"conditions,omitempty"`
-	// URL of te API server of the cluster.
-	//
-	// This will be empty if the cluster isn't ready.
-	ApiUrl string `protobuf:"bytes,3,opt,name=api_url,json=apiUrl,proto3" json:"api_url,omitempty"`
-	// URL of the console of the cluster.
-	//
-	// This will be empty if the cluster isn't ready or the console isn't enabled.
-	ConsoleUrl    string `protobuf:"bytes,4,opt,name=console_url,json=consoleUrl,proto3" json:"console_url,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                 protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_State      ClusterState           `protobuf:"varint,1,opt,name=state,proto3,enum=fulfillment.v1.ClusterState"`
+	xxx_hidden_Conditions *[]*ClusterCondition   `protobuf:"bytes,2,rep,name=conditions,proto3"`
+	xxx_hidden_ApiUrl     string                 `protobuf:"bytes,3,opt,name=api_url,json=apiUrl,proto3"`
+	xxx_hidden_ConsoleUrl string                 `protobuf:"bytes,4,opt,name=console_url,json=consoleUrl,proto3"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *ClusterStatus) Reset() {
@@ -414,46 +370,48 @@ func (x *ClusterStatus) ProtoReflect() protoreflect.Message {
 
 func (x *ClusterStatus) GetState() ClusterState {
 	if x != nil {
-		return x.State
+		return x.xxx_hidden_State
 	}
 	return ClusterState_CLUSTER_STATE_UNSPECIFIED
 }
 
 func (x *ClusterStatus) GetConditions() []*ClusterCondition {
 	if x != nil {
-		return x.Conditions
+		if x.xxx_hidden_Conditions != nil {
+			return *x.xxx_hidden_Conditions
+		}
 	}
 	return nil
 }
 
 func (x *ClusterStatus) GetApiUrl() string {
 	if x != nil {
-		return x.ApiUrl
+		return x.xxx_hidden_ApiUrl
 	}
 	return ""
 }
 
 func (x *ClusterStatus) GetConsoleUrl() string {
 	if x != nil {
-		return x.ConsoleUrl
+		return x.xxx_hidden_ConsoleUrl
 	}
 	return ""
 }
 
 func (x *ClusterStatus) SetState(v ClusterState) {
-	x.State = v
+	x.xxx_hidden_State = v
 }
 
 func (x *ClusterStatus) SetConditions(v []*ClusterCondition) {
-	x.Conditions = v
+	x.xxx_hidden_Conditions = &v
 }
 
 func (x *ClusterStatus) SetApiUrl(v string) {
-	x.ApiUrl = v
+	x.xxx_hidden_ApiUrl = v
 }
 
 func (x *ClusterStatus) SetConsoleUrl(v string) {
-	x.ConsoleUrl = v
+	x.xxx_hidden_ConsoleUrl = v
 }
 
 type ClusterStatus_builder struct {
@@ -512,32 +470,25 @@ func (b0 ClusterStatus_builder) Build() *ClusterStatus {
 	m0 := &ClusterStatus{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.State = b.State
-	x.Conditions = b.Conditions
-	x.ApiUrl = b.ApiUrl
-	x.ConsoleUrl = b.ConsoleUrl
+	x.xxx_hidden_State = b.State
+	x.xxx_hidden_Conditions = &b.Conditions
+	x.xxx_hidden_ApiUrl = b.ApiUrl
+	x.xxx_hidden_ConsoleUrl = b.ConsoleUrl
 	return m0
 }
 
 // Contains the details of a condition that describes the status of a cluster.
 type ClusterCondition struct {
-	state protoimpl.MessageState `protogen:"hybrid.v1"`
-	// Indicates the type of condition.
-	Type ClusterConditionType `protobuf:"varint,1,opt,name=type,proto3,enum=fulfillment.v1.ClusterConditionType" json:"type,omitempty"`
-	// Indicates the status of the condition.
-	Status v1.ConditionStatus `protobuf:"varint,2,opt,name=status,proto3,enum=shared.v1.ConditionStatus" json:"status,omitempty"`
-	// This time is the last time that the condition was updated.
-	LastTransitionTime *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=last_transition_time,json=lastTransitionTime,proto3" json:"last_transition_time,omitempty"`
-	// Contains a the reason of the condition in a format suitable for use by programs.
-	//
-	// The possible values will be documented in the object that contains the condition.
-	Reason *string `protobuf:"bytes,4,opt,name=reason,proto3,oneof" json:"reason,omitempty"`
-	// Contains a text giving more details of the condition.
-	//
-	// This will usually be progress reports, or error messages, and are intended for use by humans, to debug problems.
-	Message       *string `protobuf:"bytes,5,opt,name=message,proto3,oneof" json:"message,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                         protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Type               ClusterConditionType   `protobuf:"varint,1,opt,name=type,proto3,enum=fulfillment.v1.ClusterConditionType"`
+	xxx_hidden_Status             v1.ConditionStatus     `protobuf:"varint,2,opt,name=status,proto3,enum=shared.v1.ConditionStatus"`
+	xxx_hidden_LastTransitionTime *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=last_transition_time,json=lastTransitionTime,proto3"`
+	xxx_hidden_Reason             *string                `protobuf:"bytes,4,opt,name=reason,proto3,oneof"`
+	xxx_hidden_Message            *string                `protobuf:"bytes,5,opt,name=message,proto3,oneof"`
+	XXX_raceDetectHookData        protoimpl.RaceDetectHookData
+	XXX_presence                  [1]uint32
+	unknownFields                 protoimpl.UnknownFields
+	sizeCache                     protoimpl.SizeCache
 }
 
 func (x *ClusterCondition) Reset() {
@@ -567,90 +518,100 @@ func (x *ClusterCondition) ProtoReflect() protoreflect.Message {
 
 func (x *ClusterCondition) GetType() ClusterConditionType {
 	if x != nil {
-		return x.Type
+		return x.xxx_hidden_Type
 	}
 	return ClusterConditionType_CLUSTER_CONDITION_TYPE_UNSPECIFIED
 }
 
 func (x *ClusterCondition) GetStatus() v1.ConditionStatus {
 	if x != nil {
-		return x.Status
+		return x.xxx_hidden_Status
 	}
 	return v1.ConditionStatus(0)
 }
 
 func (x *ClusterCondition) GetLastTransitionTime() *timestamppb.Timestamp {
 	if x != nil {
-		return x.LastTransitionTime
+		return x.xxx_hidden_LastTransitionTime
 	}
 	return nil
 }
 
 func (x *ClusterCondition) GetReason() string {
-	if x != nil && x.Reason != nil {
-		return *x.Reason
+	if x != nil {
+		if x.xxx_hidden_Reason != nil {
+			return *x.xxx_hidden_Reason
+		}
+		return ""
 	}
 	return ""
 }
 
 func (x *ClusterCondition) GetMessage() string {
-	if x != nil && x.Message != nil {
-		return *x.Message
+	if x != nil {
+		if x.xxx_hidden_Message != nil {
+			return *x.xxx_hidden_Message
+		}
+		return ""
 	}
 	return ""
 }
 
 func (x *ClusterCondition) SetType(v ClusterConditionType) {
-	x.Type = v
+	x.xxx_hidden_Type = v
 }
 
 func (x *ClusterCondition) SetStatus(v v1.ConditionStatus) {
-	x.Status = v
+	x.xxx_hidden_Status = v
 }
 
 func (x *ClusterCondition) SetLastTransitionTime(v *timestamppb.Timestamp) {
-	x.LastTransitionTime = v
+	x.xxx_hidden_LastTransitionTime = v
 }
 
 func (x *ClusterCondition) SetReason(v string) {
-	x.Reason = &v
+	x.xxx_hidden_Reason = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 5)
 }
 
 func (x *ClusterCondition) SetMessage(v string) {
-	x.Message = &v
+	x.xxx_hidden_Message = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 4, 5)
 }
 
 func (x *ClusterCondition) HasLastTransitionTime() bool {
 	if x == nil {
 		return false
 	}
-	return x.LastTransitionTime != nil
+	return x.xxx_hidden_LastTransitionTime != nil
 }
 
 func (x *ClusterCondition) HasReason() bool {
 	if x == nil {
 		return false
 	}
-	return x.Reason != nil
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
 }
 
 func (x *ClusterCondition) HasMessage() bool {
 	if x == nil {
 		return false
 	}
-	return x.Message != nil
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 4)
 }
 
 func (x *ClusterCondition) ClearLastTransitionTime() {
-	x.LastTransitionTime = nil
+	x.xxx_hidden_LastTransitionTime = nil
 }
 
 func (x *ClusterCondition) ClearReason() {
-	x.Reason = nil
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	x.xxx_hidden_Reason = nil
 }
 
 func (x *ClusterCondition) ClearMessage() {
-	x.Message = nil
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 4)
+	x.xxx_hidden_Message = nil
 }
 
 type ClusterCondition_builder struct {
@@ -676,11 +637,17 @@ func (b0 ClusterCondition_builder) Build() *ClusterCondition {
 	m0 := &ClusterCondition{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.Type = b.Type
-	x.Status = b.Status
-	x.LastTransitionTime = b.LastTransitionTime
-	x.Reason = b.Reason
-	x.Message = b.Message
+	x.xxx_hidden_Type = b.Type
+	x.xxx_hidden_Status = b.Status
+	x.xxx_hidden_LastTransitionTime = b.LastTransitionTime
+	if b.Reason != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 5)
+		x.xxx_hidden_Reason = b.Reason
+	}
+	if b.Message != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 4, 5)
+		x.xxx_hidden_Message = b.Message
+	}
 	return m0
 }
 

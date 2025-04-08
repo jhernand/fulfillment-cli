@@ -38,8 +38,8 @@ const (
 	Clusters_GetKubeconfig_FullMethodName        = "/fulfillment.v1.Clusters/GetKubeconfig"
 	Clusters_GetKubeconfigViaHttp_FullMethodName = "/fulfillment.v1.Clusters/GetKubeconfigViaHttp"
 	Clusters_Create_FullMethodName               = "/fulfillment.v1.Clusters/Create"
+	Clusters_Update_FullMethodName               = "/fulfillment.v1.Clusters/Update"
 	Clusters_Delete_FullMethodName               = "/fulfillment.v1.Clusters/Delete"
-	Clusters_UpdateStatus_FullMethodName         = "/fulfillment.v1.Clusters/UpdateStatus"
 )
 
 // ClustersClient is the client API for Clusters service.
@@ -67,16 +67,14 @@ type ClustersClient interface {
 	// Note that this operation is not allowed for regular users, only for the server. Regular users create clusters
 	// indirectly, creating a cluster order that will eventually result in the system creating a cluster.
 	Create(ctx context.Context, in *ClustersCreateRequest, opts ...grpc.CallOption) (*ClustersCreateResponse, error)
-	// Delete a cluster.
-	Delete(ctx context.Context, in *ClustersDeleteRequest, opts ...grpc.CallOption) (*ClustersDeleteResponse, error)
-	// Updates the status of a cluster.
+	// Updates an existing cluster.
 	//
 	// In the HTTP+JSON version of the API this is mapped to the `PATCH` verb and the `update_mask` field is automatically
 	// populated from the list of fields present in the request body. For example, to update the `state` of a cluster to
 	// `READY` the request line should be like this:
 	//
 	// ```http
-	// PATCH /api/fulfillment/v1/clusters/123/status
+	// PATCH /api/fulfillment/v1/clusters/123
 	// ```
 	//
 	// And the request body should be like this:
@@ -84,13 +82,17 @@ type ClustersClient interface {
 	// ```json
 	//
 	//	{
-	//	  "state": "CLUSTER_STATE_READY"
+	//	  "status": {
+	//	    "state": "CLUSTER_STATE_READY"
+	//	  }
 	//	}
 	//
 	// ```
 	//
-	// The response body will contain the modified status.
-	UpdateStatus(ctx context.Context, in *ClustersUpdateStatusRequest, opts ...grpc.CallOption) (*ClustersUpdateStatusResponse, error)
+	// The response body will contain the modified object.
+	Update(ctx context.Context, in *ClustersUpdateRequest, opts ...grpc.CallOption) (*ClustersUpdateResponse, error)
+	// Delete a cluster.
+	Delete(ctx context.Context, in *ClustersDeleteRequest, opts ...grpc.CallOption) (*ClustersDeleteResponse, error)
 }
 
 type clustersClient struct {
@@ -151,20 +153,20 @@ func (c *clustersClient) Create(ctx context.Context, in *ClustersCreateRequest, 
 	return out, nil
 }
 
-func (c *clustersClient) Delete(ctx context.Context, in *ClustersDeleteRequest, opts ...grpc.CallOption) (*ClustersDeleteResponse, error) {
+func (c *clustersClient) Update(ctx context.Context, in *ClustersUpdateRequest, opts ...grpc.CallOption) (*ClustersUpdateResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ClustersDeleteResponse)
-	err := c.cc.Invoke(ctx, Clusters_Delete_FullMethodName, in, out, cOpts...)
+	out := new(ClustersUpdateResponse)
+	err := c.cc.Invoke(ctx, Clusters_Update_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *clustersClient) UpdateStatus(ctx context.Context, in *ClustersUpdateStatusRequest, opts ...grpc.CallOption) (*ClustersUpdateStatusResponse, error) {
+func (c *clustersClient) Delete(ctx context.Context, in *ClustersDeleteRequest, opts ...grpc.CallOption) (*ClustersDeleteResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(ClustersUpdateStatusResponse)
-	err := c.cc.Invoke(ctx, Clusters_UpdateStatus_FullMethodName, in, out, cOpts...)
+	out := new(ClustersDeleteResponse)
+	err := c.cc.Invoke(ctx, Clusters_Delete_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -196,16 +198,14 @@ type ClustersServer interface {
 	// Note that this operation is not allowed for regular users, only for the server. Regular users create clusters
 	// indirectly, creating a cluster order that will eventually result in the system creating a cluster.
 	Create(context.Context, *ClustersCreateRequest) (*ClustersCreateResponse, error)
-	// Delete a cluster.
-	Delete(context.Context, *ClustersDeleteRequest) (*ClustersDeleteResponse, error)
-	// Updates the status of a cluster.
+	// Updates an existing cluster.
 	//
 	// In the HTTP+JSON version of the API this is mapped to the `PATCH` verb and the `update_mask` field is automatically
 	// populated from the list of fields present in the request body. For example, to update the `state` of a cluster to
 	// `READY` the request line should be like this:
 	//
 	// ```http
-	// PATCH /api/fulfillment/v1/clusters/123/status
+	// PATCH /api/fulfillment/v1/clusters/123
 	// ```
 	//
 	// And the request body should be like this:
@@ -213,13 +213,17 @@ type ClustersServer interface {
 	// ```json
 	//
 	//	{
-	//	  "state": "CLUSTER_STATE_READY"
+	//	  "status": {
+	//	    "state": "CLUSTER_STATE_READY"
+	//	  }
 	//	}
 	//
 	// ```
 	//
-	// The response body will contain the modified status.
-	UpdateStatus(context.Context, *ClustersUpdateStatusRequest) (*ClustersUpdateStatusResponse, error)
+	// The response body will contain the modified object.
+	Update(context.Context, *ClustersUpdateRequest) (*ClustersUpdateResponse, error)
+	// Delete a cluster.
+	Delete(context.Context, *ClustersDeleteRequest) (*ClustersDeleteResponse, error)
 	mustEmbedUnimplementedClustersServer()
 }
 
@@ -245,11 +249,11 @@ func (UnimplementedClustersServer) GetKubeconfigViaHttp(context.Context, *Cluste
 func (UnimplementedClustersServer) Create(context.Context, *ClustersCreateRequest) (*ClustersCreateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
 }
+func (UnimplementedClustersServer) Update(context.Context, *ClustersUpdateRequest) (*ClustersUpdateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
+}
 func (UnimplementedClustersServer) Delete(context.Context, *ClustersDeleteRequest) (*ClustersDeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
-}
-func (UnimplementedClustersServer) UpdateStatus(context.Context, *ClustersUpdateStatusRequest) (*ClustersUpdateStatusResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateStatus not implemented")
 }
 func (UnimplementedClustersServer) mustEmbedUnimplementedClustersServer() {}
 func (UnimplementedClustersServer) testEmbeddedByValue()                  {}
@@ -362,6 +366,24 @@ func _Clusters_Create_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Clusters_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClustersUpdateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ClustersServer).Update(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Clusters_Update_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ClustersServer).Update(ctx, req.(*ClustersUpdateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Clusters_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ClustersDeleteRequest)
 	if err := dec(in); err != nil {
@@ -376,24 +398,6 @@ func _Clusters_Delete_Handler(srv interface{}, ctx context.Context, dec func(int
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ClustersServer).Delete(ctx, req.(*ClustersDeleteRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Clusters_UpdateStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ClustersUpdateStatusRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(ClustersServer).UpdateStatus(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: Clusters_UpdateStatus_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(ClustersServer).UpdateStatus(ctx, req.(*ClustersUpdateStatusRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -426,12 +430,12 @@ var Clusters_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _Clusters_Create_Handler,
 		},
 		{
-			MethodName: "Delete",
-			Handler:    _Clusters_Delete_Handler,
+			MethodName: "Update",
+			Handler:    _Clusters_Update_Handler,
 		},
 		{
-			MethodName: "UpdateStatus",
-			Handler:    _Clusters_UpdateStatus_Handler,
+			MethodName: "Delete",
+			Handler:    _Clusters_Delete_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

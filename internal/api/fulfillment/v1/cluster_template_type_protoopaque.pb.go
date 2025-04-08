@@ -17,7 +17,7 @@
 // 	protoc        (unknown)
 // source: fulfillment/v1/cluster_template_type.proto
 
-//go:build !protoopaque
+//go:build protoopaque
 
 package fulfillmentv1
 
@@ -40,22 +40,14 @@ const (
 // A cluster template defines a type of cluster that can be ordered by the user. Note that the user doesn't create these
 // templates: the system provides a collection of them, and the user chooses one.
 type ClusterTemplate struct {
-	state protoimpl.MessageState `protogen:"hybrid.v1"`
-	// Unique identifier of the template.
-	Id       string       `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Metadata *v1.Metadata `protobuf:"bytes,2,opt,name=metadata,proto3" json:"metadata,omitempty"`
-	// Human friendly short description of the template, only a few words, suitable for displaying in one single
-	// line on a UI or CLI.
-	Title string `protobuf:"bytes,3,opt,name=title,proto3" json:"title,omitempty"`
-	// Human friendly long description of the template, using Markdown format.
-	Description string `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
-	// Definitions of the parameters that can be used to customize the template.
-	//
-	// Note that these are only the *definitions* of the parameters, not the actual values. The actual values are in the
-	// `spec.template_parameters` field of the cluster order.
-	Parameters    []*ClusterTemplateParameterDefinition `protobuf:"bytes,5,rep,name=parameters,proto3" json:"parameters,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                  protoimpl.MessageState                 `protogen:"opaque.v1"`
+	xxx_hidden_Id          string                                 `protobuf:"bytes,1,opt,name=id,proto3"`
+	xxx_hidden_Metadata    *v1.Metadata                           `protobuf:"bytes,2,opt,name=metadata,proto3"`
+	xxx_hidden_Title       string                                 `protobuf:"bytes,3,opt,name=title,proto3"`
+	xxx_hidden_Description string                                 `protobuf:"bytes,4,opt,name=description,proto3"`
+	xxx_hidden_Parameters  *[]*ClusterTemplateParameterDefinition `protobuf:"bytes,5,rep,name=parameters,proto3"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *ClusterTemplate) Reset() {
@@ -85,68 +77,70 @@ func (x *ClusterTemplate) ProtoReflect() protoreflect.Message {
 
 func (x *ClusterTemplate) GetId() string {
 	if x != nil {
-		return x.Id
+		return x.xxx_hidden_Id
 	}
 	return ""
 }
 
 func (x *ClusterTemplate) GetMetadata() *v1.Metadata {
 	if x != nil {
-		return x.Metadata
+		return x.xxx_hidden_Metadata
 	}
 	return nil
 }
 
 func (x *ClusterTemplate) GetTitle() string {
 	if x != nil {
-		return x.Title
+		return x.xxx_hidden_Title
 	}
 	return ""
 }
 
 func (x *ClusterTemplate) GetDescription() string {
 	if x != nil {
-		return x.Description
+		return x.xxx_hidden_Description
 	}
 	return ""
 }
 
 func (x *ClusterTemplate) GetParameters() []*ClusterTemplateParameterDefinition {
 	if x != nil {
-		return x.Parameters
+		if x.xxx_hidden_Parameters != nil {
+			return *x.xxx_hidden_Parameters
+		}
 	}
 	return nil
 }
 
 func (x *ClusterTemplate) SetId(v string) {
-	x.Id = v
+	x.xxx_hidden_Id = v
 }
 
 func (x *ClusterTemplate) SetMetadata(v *v1.Metadata) {
-	x.Metadata = v
+	x.xxx_hidden_Metadata = v
 }
 
 func (x *ClusterTemplate) SetTitle(v string) {
-	x.Title = v
+	x.xxx_hidden_Title = v
 }
 
 func (x *ClusterTemplate) SetDescription(v string) {
-	x.Description = v
+	x.xxx_hidden_Description = v
 }
 
 func (x *ClusterTemplate) SetParameters(v []*ClusterTemplateParameterDefinition) {
-	x.Parameters = v
+	x.xxx_hidden_Parameters = &v
 }
 
 func (x *ClusterTemplate) HasMetadata() bool {
 	if x == nil {
 		return false
 	}
-	return x.Metadata != nil
+	return x.xxx_hidden_Metadata != nil
 }
 
 func (x *ClusterTemplate) ClearMetadata() {
-	x.Metadata = nil
+	x.xxx_hidden_Metadata = nil
 }
 
 type ClusterTemplate_builder struct {
@@ -171,59 +165,25 @@ func (b0 ClusterTemplate_builder) Build() *ClusterTemplate {
 	m0 := &ClusterTemplate{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.Id = b.Id
-	x.Metadata = b.Metadata
-	x.Title = b.Title
-	x.Description = b.Description
-	x.Parameters = b.Parameters
+	x.xxx_hidden_Id = b.Id
+	x.xxx_hidden_Metadata = b.Metadata
+	x.xxx_hidden_Title = b.Title
+	x.xxx_hidden_Description = b.Description
+	x.xxx_hidden_Parameters = &b.Parameters
 	return m0
 }
 
 // Contains type and documentation of a template parameter.
 type ClusterTemplateParameterDefinition struct {
-	state protoimpl.MessageState `protogen:"hybrid.v1"`
-	// Name of the parameter.
-	//
-	// This is the name that should be used in the `template_parameters` field of the order to assign a value to the
-	// parameter.
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	// Human friendly short description of the parameter, only a few words, suitable for displaying in one single line on
-	// a UI or CLI.
-	Title string `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
-	// Human friendly description of the parameter, using Markdown format.
-	Description string `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	// Indicates if this parameter is required or optional.
-	//
-	// Values for required parameters must be included when sending the order, otherwise it will be rejected.
-	//
-	// Note that there may be other dependencies between parameters which may cause a order to be rejected. For example,
-	// the allowed values of a parameter may depend on the value of another parameter. That kind of information will be in
-	// the `description` field.
-	Required bool `protobuf:"varint,4,opt,name=required,proto3" json:"required,omitempty"`
-	// Type of the parameter.
-	//
-	// The possible values are the same as those used by the `type_url` field of the `Any` type:
-	//
-	// | Type                           | Value                                             |
-	// |--------------------------------|---------------------------------------------------|
-	// | Boolean                        | `type.googleapis.com/google.protobuf.BoolValue`   |
-	// | Integer number, 32 bits        | `type.googleapis.com/google.protobuf.Int32Value`  |
-	// | Integer number, 64 bits        | `type.googleapis.com/google.protobuf.Int64Value`  |
-	// | Floating point number, 32 bits | `type.googleapis.com/google.protobuf.FloatValue`  |
-	// | Floating point number, 64 bits | `type.googleapis.com/google.protobuf.DoubleValue` |
-	// | String                         | `type.googleapis.com/google.protobuf.StringValue` |
-	// | Timestamp                      | `type.googleapis.com/google.protobuf.Timestamp`   |
-	// | Duration                       | `type.googleapis.com/google.protobuf.Duration`    |
-	// | Array of bytes                 | `type.googleapis.com/google.protobuf.BytesValue`  |
-	// | Any JSON value                 | `type.googleapis.com/google.protobuf.Value`       |
-	//
-	// When using the HTTP+JSON version of the API the value provided in the `template_parameters` field of the order
-	// must be represented as documented in the (ProtoJSON format document)[https://protobuf.dev/programming-guides/json].
-	Type string `protobuf:"bytes,5,opt,name=type,proto3" json:"type,omitempty"`
-	// Default value for optional parameters.
-	Default       *anypb.Any `protobuf:"bytes,6,opt,name=default,proto3" json:"default,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Name        string                 `protobuf:"bytes,1,opt,name=name,proto3"`
+	xxx_hidden_Title       string                 `protobuf:"bytes,2,opt,name=title,proto3"`
+	xxx_hidden_Description string                 `protobuf:"bytes,3,opt,name=description,proto3"`
+	xxx_hidden_Required    bool                   `protobuf:"varint,4,opt,name=required,proto3"`
+	xxx_hidden_Type        string                 `protobuf:"bytes,5,opt,name=type,proto3"`
+	xxx_hidden_Default     *anypb.Any             `protobuf:"bytes,6,opt,name=default,proto3"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *ClusterTemplateParameterDefinition) Reset() {
@@ -253,79 +213,79 @@ func (x *ClusterTemplateParameterDefinition) ProtoReflect() protoreflect.Message
 
 func (x *ClusterTemplateParameterDefinition) GetName() string {
 	if x != nil {
-		return x.Name
+		return x.xxx_hidden_Name
 	}
 	return ""
 }
 
 func (x *ClusterTemplateParameterDefinition) GetTitle() string {
 	if x != nil {
-		return x.Title
+		return x.xxx_hidden_Title
 	}
 	return ""
 }
 
 func (x *ClusterTemplateParameterDefinition) GetDescription() string {
 	if x != nil {
-		return x.Description
+		return x.xxx_hidden_Description
 	}
 	return ""
 }
 
 func (x *ClusterTemplateParameterDefinition) GetRequired() bool {
 	if x != nil {
-		return x.Required
+		return x.xxx_hidden_Required
 	}
 	return false
 }
 
 func (x *ClusterTemplateParameterDefinition) GetType() string {
 	if x != nil {
-		return x.Type
+		return x.xxx_hidden_Type
 	}
 	return ""
 }
 
 func (x *ClusterTemplateParameterDefinition) GetDefault() *anypb.Any {
 	if x != nil {
-		return x.Default
+		return x.xxx_hidden_Default
 	}
 	return nil
 }
 
 func (x *ClusterTemplateParameterDefinition) SetName(v string) {
-	x.Name = v
+	x.xxx_hidden_Name = v
 }
 
 func (x *ClusterTemplateParameterDefinition) SetTitle(v string) {
-	x.Title = v
+	x.xxx_hidden_Title = v
 }
 
 func (x *ClusterTemplateParameterDefinition) SetDescription(v string) {
-	x.Description = v
+	x.xxx_hidden_Description = v
 }
 
 func (x *ClusterTemplateParameterDefinition) SetRequired(v bool) {
-	x.Required = v
+	x.xxx_hidden_Required = v
 }
 
 func (x *ClusterTemplateParameterDefinition) SetType(v string) {
-	x.Type = v
+	x.xxx_hidden_Type = v
 }
 
 func (x *ClusterTemplateParameterDefinition) SetDefault(v *anypb.Any) {
-	x.Default = v
+	x.xxx_hidden_Default = v
 }
 
 func (x *ClusterTemplateParameterDefinition) HasDefault() bool {
 	if x == nil {
 		return false
 	}
-	return x.Default != nil
+	return x.xxx_hidden_Default != nil
 }
 
 func (x *ClusterTemplateParameterDefinition) ClearDefault() {
-	x.Default = nil
+	x.xxx_hidden_Default = nil
 }
 
 type ClusterTemplateParameterDefinition_builder struct {
@@ -377,12 +337,12 @@ func (b0 ClusterTemplateParameterDefinition_builder) Build() *ClusterTemplatePar
 	m0 := &ClusterTemplateParameterDefinition{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.Name = b.Name
-	x.Title = b.Title
-	x.Description = b.Description
-	x.Required = b.Required
-	x.Type = b.Type
-	x.Default = b.Default
+	x.xxx_hidden_Name = b.Name
+	x.xxx_hidden_Title = b.Title
+	x.xxx_hidden_Description = b.Description
+	x.xxx_hidden_Required = b.Required
+	x.xxx_hidden_Type = b.Type
+	x.xxx_hidden_Default = b.Default
 	return m0
 }
 

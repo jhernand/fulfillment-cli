@@ -35,6 +35,7 @@ const (
 	ClusterTemplates_List_FullMethodName   = "/fulfillment.v1.ClusterTemplates/List"
 	ClusterTemplates_Get_FullMethodName    = "/fulfillment.v1.ClusterTemplates/Get"
 	ClusterTemplates_Create_FullMethodName = "/fulfillment.v1.ClusterTemplates/Create"
+	ClusterTemplates_Update_FullMethodName = "/fulfillment.v1.ClusterTemplates/Update"
 	ClusterTemplates_Delete_FullMethodName = "/fulfillment.v1.ClusterTemplates/Delete"
 )
 
@@ -48,6 +49,8 @@ type ClusterTemplatesClient interface {
 	Get(ctx context.Context, in *ClusterTemplatesGetRequest, opts ...grpc.CallOption) (*ClusterTemplatesGetResponse, error)
 	// Creates a new cluster template.
 	Create(ctx context.Context, in *ClusterTemplatesCreateRequest, opts ...grpc.CallOption) (*ClusterTemplatesCreateResponse, error)
+	// Updates an existint cluster template.
+	Update(ctx context.Context, in *ClusterTemplatesUpdateRequest, opts ...grpc.CallOption) (*ClusterTemplatesUpdateResponse, error)
 	// Delete a cluster template.
 	Delete(ctx context.Context, in *ClusterTemplatesDeleteRequest, opts ...grpc.CallOption) (*ClusterTemplatesDeleteResponse, error)
 }
@@ -90,6 +93,16 @@ func (c *clusterTemplatesClient) Create(ctx context.Context, in *ClusterTemplate
 	return out, nil
 }
 
+func (c *clusterTemplatesClient) Update(ctx context.Context, in *ClusterTemplatesUpdateRequest, opts ...grpc.CallOption) (*ClusterTemplatesUpdateResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ClusterTemplatesUpdateResponse)
+	err := c.cc.Invoke(ctx, ClusterTemplates_Update_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *clusterTemplatesClient) Delete(ctx context.Context, in *ClusterTemplatesDeleteRequest, opts ...grpc.CallOption) (*ClusterTemplatesDeleteResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ClusterTemplatesDeleteResponse)
@@ -110,6 +123,8 @@ type ClusterTemplatesServer interface {
 	Get(context.Context, *ClusterTemplatesGetRequest) (*ClusterTemplatesGetResponse, error)
 	// Creates a new cluster template.
 	Create(context.Context, *ClusterTemplatesCreateRequest) (*ClusterTemplatesCreateResponse, error)
+	// Updates an existint cluster template.
+	Update(context.Context, *ClusterTemplatesUpdateRequest) (*ClusterTemplatesUpdateResponse, error)
 	// Delete a cluster template.
 	Delete(context.Context, *ClusterTemplatesDeleteRequest) (*ClusterTemplatesDeleteResponse, error)
 	mustEmbedUnimplementedClusterTemplatesServer()
@@ -130,6 +145,9 @@ func (UnimplementedClusterTemplatesServer) Get(context.Context, *ClusterTemplate
 }
 func (UnimplementedClusterTemplatesServer) Create(context.Context, *ClusterTemplatesCreateRequest) (*ClusterTemplatesCreateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
+}
+func (UnimplementedClusterTemplatesServer) Update(context.Context, *ClusterTemplatesUpdateRequest) (*ClusterTemplatesUpdateResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Update not implemented")
 }
 func (UnimplementedClusterTemplatesServer) Delete(context.Context, *ClusterTemplatesDeleteRequest) (*ClusterTemplatesDeleteResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
@@ -209,6 +227,24 @@ func _ClusterTemplates_Create_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ClusterTemplates_Update_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ClusterTemplatesUpdateRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ClusterTemplatesServer).Update(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ClusterTemplates_Update_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ClusterTemplatesServer).Update(ctx, req.(*ClusterTemplatesUpdateRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ClusterTemplates_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ClusterTemplatesDeleteRequest)
 	if err := dec(in); err != nil {
@@ -245,6 +281,10 @@ var ClusterTemplates_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Create",
 			Handler:    _ClusterTemplates_Create_Handler,
+		},
+		{
+			MethodName: "Update",
+			Handler:    _ClusterTemplates_Update_Handler,
 		},
 		{
 			MethodName: "Delete",

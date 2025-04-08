@@ -17,7 +17,7 @@
 // 	protoc        (unknown)
 // source: fulfillment/v1/clusters_service.proto
 
-//go:build !protoopaque
+//go:build protoopaque
 
 package fulfillmentv1
 
@@ -39,36 +39,15 @@ const (
 )
 
 type ClustersListRequest struct {
-	state protoimpl.MessageState `protogen:"hybrid.v1"`
-	// Index of the first result. If not specified the default value will be zero.
-	Offset *int32 `protobuf:"varint,1,opt,name=offset,proto3,oneof" json:"offset,omitempty"`
-	// Maximum number of results to be returned by the server. When not specified all the results will be returned. Note
-	// that there may not be enough results to return, and that the server may decide, for performance reasons, to return
-	// less results than requested.
-	Limit *int32 `protobuf:"varint,2,opt,name=limit,proto3,oneof" json:"limit,omitempty"`
-	// Filter criteria.
-	//
-	// The syntax of this parameter is similar to the syntax of the _where_ clause of a SQL statement, but using the names
-	// of the attributes of the cluster instead of the names of the columns of a table. For example, in order to retrieve
-	// all the cluster with a API URL starting with `http:` the value should be:
-	//
-	//	api_url like 'http:%'
-	//
-	// If this isn't provided, or if the value is empty, then all the clusters that the user has permission to see will be
-	// returned.
-	Filter *string `protobuf:"bytes,3,opt,name=filter,proto3,oneof" json:"filter,omitempty"`
-	// Order criteria.
-	//
-	// The syntax of this parameter is similar to the syntax of the _order by_ clause of a SQL statement, but using the
-	// names of the attributes of the cluster instead of the names of the columns of a table. For example, in order to
-	// sort the clusters descending by API URL the value should be:
-	//
-	//	api_url desc
-	//
-	// If the parameter isn't provided, or if the value is empty, then the order of the results is undefined.
-	Order         *string `protobuf:"bytes,4,opt,name=order,proto3,oneof" json:"order,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Offset      int32                  `protobuf:"varint,1,opt,name=offset,proto3,oneof"`
+	xxx_hidden_Limit       int32                  `protobuf:"varint,2,opt,name=limit,proto3,oneof"`
+	xxx_hidden_Filter      *string                `protobuf:"bytes,3,opt,name=filter,proto3,oneof"`
+	xxx_hidden_Order       *string                `protobuf:"bytes,4,opt,name=order,proto3,oneof"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *ClustersListRequest) Reset() {
@@ -97,91 +76,105 @@ func (x *ClustersListRequest) ProtoReflect() protoreflect.Message {
 }
 
 func (x *ClustersListRequest) GetOffset() int32 {
-	if x != nil && x.Offset != nil {
-		return *x.Offset
+	if x != nil {
+		return x.xxx_hidden_Offset
 	}
 	return 0
 }
 
 func (x *ClustersListRequest) GetLimit() int32 {
-	if x != nil && x.Limit != nil {
-		return *x.Limit
+	if x != nil {
+		return x.xxx_hidden_Limit
 	}
 	return 0
 }
 
 func (x *ClustersListRequest) GetFilter() string {
-	if x != nil && x.Filter != nil {
-		return *x.Filter
+	if x != nil {
+		if x.xxx_hidden_Filter != nil {
+			return *x.xxx_hidden_Filter
+		}
+		return ""
 	}
 	return ""
 }
 
 func (x *ClustersListRequest) GetOrder() string {
-	if x != nil && x.Order != nil {
-		return *x.Order
+	if x != nil {
+		if x.xxx_hidden_Order != nil {
+			return *x.xxx_hidden_Order
+		}
+		return ""
 	}
 	return ""
 }
 
 func (x *ClustersListRequest) SetOffset(v int32) {
-	x.Offset = &v
+	x.xxx_hidden_Offset = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 4)
 }
 
 func (x *ClustersListRequest) SetLimit(v int32) {
-	x.Limit = &v
+	x.xxx_hidden_Limit = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 4)
 }
 
 func (x *ClustersListRequest) SetFilter(v string) {
-	x.Filter = &v
+	x.xxx_hidden_Filter = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 2, 4)
 }
 
 func (x *ClustersListRequest) SetOrder(v string) {
-	x.Order = &v
+	x.xxx_hidden_Order = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 3, 4)
 }
 
 func (x *ClustersListRequest) HasOffset() bool {
 	if x == nil {
 		return false
 	}
-	return x.Offset != nil
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
 }
 
 func (x *ClustersListRequest) HasLimit() bool {
 	if x == nil {
 		return false
 	}
-	return x.Limit != nil
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
 }
 
 func (x *ClustersListRequest) HasFilter() bool {
 	if x == nil {
 		return false
 	}
-	return x.Filter != nil
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 2)
 }
 
 func (x *ClustersListRequest) HasOrder() bool {
 	if x == nil {
 		return false
 	}
-	return x.Order != nil
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 3)
 }
 
 func (x *ClustersListRequest) ClearOffset() {
-	x.Offset = nil
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Offset = 0
 }
 
 func (x *ClustersListRequest) ClearLimit() {
-	x.Limit = nil
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Limit = 0
 }
 
 func (x *ClustersListRequest) ClearFilter() {
-	x.Filter = nil
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 2)
+	x.xxx_hidden_Filter = nil
 }
 
 func (x *ClustersListRequest) ClearOrder() {
-	x.Order = nil
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 3)
+	x.xxx_hidden_Order = nil
 }
 
 type ClustersListRequest_builder struct {
@@ -220,26 +213,34 @@ func (b0 ClustersListRequest_builder) Build() *ClustersListRequest {
 	m0 := &ClustersListRequest{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.Offset = b.Offset
-	x.Limit = b.Limit
-	x.Filter = b.Filter
-	x.Order = b.Order
+	if b.Offset != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 4)
+		x.xxx_hidden_Offset = *b.Offset
+	}
+	if b.Limit != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 4)
+		x.xxx_hidden_Limit = *b.Limit
+	}
+	if b.Filter != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 2, 4)
+		x.xxx_hidden_Filter = b.Filter
+	}
+	if b.Order != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 3, 4)
+		x.xxx_hidden_Order = b.Order
+	}
 	return m0
 }
 
 type ClustersListResponse struct {
-	state protoimpl.MessageState `protogen:"hybrid.v1"`
-	// Actual number of items returned. Note that this may be smaller than the value requested in the `limit` parameter
-	// of the request if there are not enough items, or of the system decides that returning that number of items isn't
-	// feasible or convenient for performance reasons.
-	Size *int32 `protobuf:"varint,1,opt,name=size,proto3,oneof" json:"size,omitempty"`
-	// Total number of items of the collection that match the search criteria, regardless of the number of results
-	// requested with the `limit` parameter.
-	Total *int32 `protobuf:"varint,2,opt,name=total,proto3,oneof" json:"total,omitempty"`
-	// List of results.
-	Items         []*Cluster `protobuf:"bytes,3,rep,name=items,proto3" json:"items,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Size        int32                  `protobuf:"varint,1,opt,name=size,proto3,oneof"`
+	xxx_hidden_Total       int32                  `protobuf:"varint,2,opt,name=total,proto3,oneof"`
+	xxx_hidden_Items       *[]*Cluster            `protobuf:"bytes,3,rep,name=items,proto3"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *ClustersListResponse) Reset() {
@@ -268,58 +269,64 @@ func (x *ClustersListResponse) ProtoReflect() protoreflect.Message {
 }
 
 func (x *ClustersListResponse) GetSize() int32 {
-	if x != nil && x.Size != nil {
-		return *x.Size
+	if x != nil {
+		return x.xxx_hidden_Size
 	}
 	return 0
 }
 
 func (x *ClustersListResponse) GetTotal() int32 {
-	if x != nil && x.Total != nil {
-		return *x.Total
+	if x != nil {
+		return x.xxx_hidden_Total
 	}
 	return 0
 }
 
 func (x *ClustersListResponse) GetItems() []*Cluster {
 	if x != nil {
-		return x.Items
+		if x.xxx_hidden_Items != nil {
+			return *x.xxx_hidden_Items
+		}
 	}
 	return nil
 }
 
 func (x *ClustersListResponse) SetSize(v int32) {
-	x.Size = &v
+	x.xxx_hidden_Size = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 3)
 }
 
 func (x *ClustersListResponse) SetTotal(v int32) {
-	x.Total = &v
+	x.xxx_hidden_Total = v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 1, 3)
 }
 
 func (x *ClustersListResponse) SetItems(v []*Cluster) {
-	x.Items = v
+	x.xxx_hidden_Items = &v
 }
 
 func (x *ClustersListResponse) HasSize() bool {
 	if x == nil {
 		return false
 	}
-	return x.Size != nil
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
 }
 
 func (x *ClustersListResponse) HasTotal() bool {
 	if x == nil {
 		return false
 	}
-	return x.Total != nil
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 1)
 }
 
 func (x *ClustersListResponse) ClearSize() {
-	x.Size = nil
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Size = 0
 }
 
 func (x *ClustersListResponse) ClearTotal() {
-	x.Total = nil
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 1)
+	x.xxx_hidden_Total = 0
 }
 
 type ClustersListResponse_builder struct {
@@ -340,15 +347,21 @@ func (b0 ClustersListResponse_builder) Build() *ClustersListResponse {
 	m0 := &ClustersListResponse{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.Size = b.Size
-	x.Total = b.Total
-	x.Items = b.Items
+	if b.Size != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 3)
+		x.xxx_hidden_Size = *b.Size
+	}
+	if b.Total != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 1, 3)
+		x.xxx_hidden_Total = *b.Total
+	}
+	x.xxx_hidden_Items = &b.Items
 	return m0
 }
 
 type ClustersGetRequest struct {
-	state         protoimpl.MessageState `protogen:"hybrid.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id string                 `protobuf:"bytes,1,opt,name=id,proto3"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -380,13 +393,13 @@ func (x *ClustersGetRequest) ProtoReflect() protoreflect.Message {
 
 func (x *ClustersGetRequest) GetId() string {
 	if x != nil {
-		return x.Id
+		return x.xxx_hidden_Id
 	}
 	return ""
 }
 
 func (x *ClustersGetRequest) SetId(v string) {
-	x.Id = v
+	x.xxx_hidden_Id = v
 }
 
 type ClustersGetRequest_builder struct {
@@ -399,15 +412,15 @@ func (b0 ClustersGetRequest_builder) Build() *ClustersGetRequest {
 	m0 := &ClustersGetRequest{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.Id = b.Id
+	x.xxx_hidden_Id = b.Id
 	return m0
 }
 
 type ClustersGetResponse struct {
-	state         protoimpl.MessageState `protogen:"hybrid.v1"`
-	Object        *Cluster               `protobuf:"bytes,1,opt,name=object,proto3" json:"object,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Object *Cluster               `protobuf:"bytes,1,opt,name=object,proto3"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *ClustersGetResponse) Reset() {
@@ -437,24 +450,24 @@ func (x *ClustersGetResponse) ProtoReflect() protoreflect.Message {
 
 func (x *ClustersGetResponse) GetObject() *Cluster {
 	if x != nil {
-		return x.Object
+		return x.xxx_hidden_Object
 	}
 	return nil
 }
 
 func (x *ClustersGetResponse) SetObject(v *Cluster) {
-	x.Object = v
+	x.xxx_hidden_Object = v
 }
 
 func (x *ClustersGetResponse) HasObject() bool {
 	if x == nil {
 		return false
 	}
-	return x.Object != nil
+	return x.xxx_hidden_Object != nil
 }
 
 func (x *ClustersGetResponse) ClearObject() {
-	x.Object = nil
+	x.xxx_hidden_Object = nil
 }
 
 type ClustersGetResponse_builder struct {
@@ -467,13 +480,13 @@ func (b0 ClustersGetResponse_builder) Build() *ClustersGetResponse {
 	m0 := &ClustersGetResponse{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.Object = b.Object
+	x.xxx_hidden_Object = b.Object
 	return m0
 }
 
 type ClustersGetKubeconfigRequest struct {
-	state         protoimpl.MessageState `protogen:"hybrid.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id string                 `protobuf:"bytes,1,opt,name=id,proto3"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -505,13 +518,13 @@ func (x *ClustersGetKubeconfigRequest) ProtoReflect() protoreflect.Message {
 
 func (x *ClustersGetKubeconfigRequest) GetId() string {
 	if x != nil {
-		return x.Id
+		return x.xxx_hidden_Id
 	}
 	return ""
 }
 
 func (x *ClustersGetKubeconfigRequest) SetId(v string) {
-	x.Id = v
+	x.xxx_hidden_Id = v
 }
 
 type ClustersGetKubeconfigRequest_builder struct {
@@ -524,15 +537,15 @@ func (b0 ClustersGetKubeconfigRequest_builder) Build() *ClustersGetKubeconfigReq
 	m0 := &ClustersGetKubeconfigRequest{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.Id = b.Id
+	x.xxx_hidden_Id = b.Id
 	return m0
 }
 
 type ClustersGetKubeconfigResponse struct {
-	state         protoimpl.MessageState `protogen:"hybrid.v1"`
-	Kubeconfig    string                 `protobuf:"bytes,1,opt,name=kubeconfig,proto3" json:"kubeconfig,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                 protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Kubeconfig string                 `protobuf:"bytes,1,opt,name=kubeconfig,proto3"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *ClustersGetKubeconfigResponse) Reset() {
@@ -562,13 +575,13 @@ func (x *ClustersGetKubeconfigResponse) ProtoReflect() protoreflect.Message {
 
 func (x *ClustersGetKubeconfigResponse) GetKubeconfig() string {
 	if x != nil {
-		return x.Kubeconfig
+		return x.xxx_hidden_Kubeconfig
 	}
 	return ""
 }
 
 func (x *ClustersGetKubeconfigResponse) SetKubeconfig(v string) {
-	x.Kubeconfig = v
+	x.xxx_hidden_Kubeconfig = v
 }
 
 type ClustersGetKubeconfigResponse_builder struct {
@@ -581,13 +594,13 @@ func (b0 ClustersGetKubeconfigResponse_builder) Build() *ClustersGetKubeconfigRe
 	m0 := &ClustersGetKubeconfigResponse{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.Kubeconfig = b.Kubeconfig
+	x.xxx_hidden_Kubeconfig = b.Kubeconfig
 	return m0
 }
 
 type ClustersGetKubeconfigViaHttpRequest struct {
-	state         protoimpl.MessageState `protogen:"hybrid.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id string                 `protobuf:"bytes,1,opt,name=id,proto3"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -619,13 +632,13 @@ func (x *ClustersGetKubeconfigViaHttpRequest) ProtoReflect() protoreflect.Messag
 
 func (x *ClustersGetKubeconfigViaHttpRequest) GetId() string {
 	if x != nil {
-		return x.Id
+		return x.xxx_hidden_Id
 	}
 	return ""
 }
 
 func (x *ClustersGetKubeconfigViaHttpRequest) SetId(v string) {
-	x.Id = v
+	x.xxx_hidden_Id = v
 }
 
 type ClustersGetKubeconfigViaHttpRequest_builder struct {
@@ -638,15 +651,15 @@ func (b0 ClustersGetKubeconfigViaHttpRequest_builder) Build() *ClustersGetKubeco
 	m0 := &ClustersGetKubeconfigViaHttpRequest{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.Id = b.Id
+	x.xxx_hidden_Id = b.Id
 	return m0
 }
 
 type ClustersCreateRequest struct {
-	state         protoimpl.MessageState `protogen:"hybrid.v1"`
-	Object        *Cluster               `protobuf:"bytes,1,opt,name=object,proto3" json:"object,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Object *Cluster               `protobuf:"bytes,1,opt,name=object,proto3"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *ClustersCreateRequest) Reset() {
@@ -676,24 +689,24 @@ func (x *ClustersCreateRequest) ProtoReflect() protoreflect.Message {
 
 func (x *ClustersCreateRequest) GetObject() *Cluster {
 	if x != nil {
-		return x.Object
+		return x.xxx_hidden_Object
 	}
 	return nil
 }
 
 func (x *ClustersCreateRequest) SetObject(v *Cluster) {
-	x.Object = v
+	x.xxx_hidden_Object = v
 }
 
 func (x *ClustersCreateRequest) HasObject() bool {
 	if x == nil {
 		return false
 	}
-	return x.Object != nil
+	return x.xxx_hidden_Object != nil
 }
 
 func (x *ClustersCreateRequest) ClearObject() {
-	x.Object = nil
+	x.xxx_hidden_Object = nil
 }
 
 type ClustersCreateRequest_builder struct {
@@ -706,15 +719,15 @@ func (b0 ClustersCreateRequest_builder) Build() *ClustersCreateRequest {
 	m0 := &ClustersCreateRequest{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.Object = b.Object
+	x.xxx_hidden_Object = b.Object
 	return m0
 }
 
 type ClustersCreateResponse struct {
-	state         protoimpl.MessageState `protogen:"hybrid.v1"`
-	Object        *Cluster               `protobuf:"bytes,1,opt,name=object,proto3" json:"object,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Object *Cluster               `protobuf:"bytes,1,opt,name=object,proto3"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *ClustersCreateResponse) Reset() {
@@ -744,24 +757,24 @@ func (x *ClustersCreateResponse) ProtoReflect() protoreflect.Message {
 
 func (x *ClustersCreateResponse) GetObject() *Cluster {
 	if x != nil {
-		return x.Object
+		return x.xxx_hidden_Object
 	}
 	return nil
 }
 
 func (x *ClustersCreateResponse) SetObject(v *Cluster) {
-	x.Object = v
+	x.xxx_hidden_Object = v
 }
 
 func (x *ClustersCreateResponse) HasObject() bool {
 	if x == nil {
 		return false
 	}
-	return x.Object != nil
+	return x.xxx_hidden_Object != nil
 }
 
 func (x *ClustersCreateResponse) ClearObject() {
-	x.Object = nil
+	x.xxx_hidden_Object = nil
 }
 
 type ClustersCreateResponse_builder struct {
@@ -774,15 +787,15 @@ func (b0 ClustersCreateResponse_builder) Build() *ClustersCreateResponse {
 	m0 := &ClustersCreateResponse{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.Object = b.Object
+	x.xxx_hidden_Object = b.Object
 	return m0
 }
 
 type ClustersUpdateRequest struct {
-	state         protoimpl.MessageState `protogen:"hybrid.v1"`
-	Object        *Cluster               `protobuf:"bytes,1,opt,name=object,proto3" json:"object,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Object *Cluster               `protobuf:"bytes,1,opt,name=object,proto3"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *ClustersUpdateRequest) Reset() {
@@ -812,24 +825,24 @@ func (x *ClustersUpdateRequest) ProtoReflect() protoreflect.Message {
 
 func (x *ClustersUpdateRequest) GetObject() *Cluster {
 	if x != nil {
-		return x.Object
+		return x.xxx_hidden_Object
 	}
 	return nil
 }
 
 func (x *ClustersUpdateRequest) SetObject(v *Cluster) {
-	x.Object = v
+	x.xxx_hidden_Object = v
 }
 
 func (x *ClustersUpdateRequest) HasObject() bool {
 	if x == nil {
 		return false
 	}
-	return x.Object != nil
+	return x.xxx_hidden_Object != nil
 }
 
 func (x *ClustersUpdateRequest) ClearObject() {
-	x.Object = nil
+	x.xxx_hidden_Object = nil
 }
 
 type ClustersUpdateRequest_builder struct {
@@ -842,16 +855,16 @@ func (b0 ClustersUpdateRequest_builder) Build() *ClustersUpdateRequest {
 	m0 := &ClustersUpdateRequest{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.Object = b.Object
+	x.xxx_hidden_Object = b.Object
 	return m0
 }
 
 type ClustersUpdateResponse struct {
-	state         protoimpl.MessageState `protogen:"hybrid.v1"`
-	Object        *Cluster               `protobuf:"bytes,1,opt,name=object,proto3" json:"object,omitempty"`
-	UpdateMask    *fieldmaskpb.FieldMask `protobuf:"bytes,2,opt,name=update_mask,json=updateMask,proto3" json:"update_mask,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                 protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Object     *Cluster               `protobuf:"bytes,1,opt,name=object,proto3"`
+	xxx_hidden_UpdateMask *fieldmaskpb.FieldMask `protobuf:"bytes,2,opt,name=update_mask,json=updateMask,proto3"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *ClustersUpdateResponse) Reset() {
@@ -881,46 +894,46 @@ func (x *ClustersUpdateResponse) ProtoReflect() protoreflect.Message {
 
 func (x *ClustersUpdateResponse) GetObject() *Cluster {
 	if x != nil {
-		return x.Object
+		return x.xxx_hidden_Object
 	}
 	return nil
 }
 
 func (x *ClustersUpdateResponse) GetUpdateMask() *fieldmaskpb.FieldMask {
 	if x != nil {
-		return x.UpdateMask
+		return x.xxx_hidden_UpdateMask
 	}
 	return nil
 }
 
 func (x *ClustersUpdateResponse) SetObject(v *Cluster) {
-	x.Object = v
+	x.xxx_hidden_Object = v
 }
 
 func (x *ClustersUpdateResponse) SetUpdateMask(v *fieldmaskpb.FieldMask) {
-	x.UpdateMask = v
+	x.xxx_hidden_UpdateMask = v
 }
 
 func (x *ClustersUpdateResponse) HasObject() bool {
 	if x == nil {
 		return false
 	}
-	return x.Object != nil
+	return x.xxx_hidden_Object != nil
 }
 
 func (x *ClustersUpdateResponse) HasUpdateMask() bool {
 	if x == nil {
 		return false
 	}
-	return x.UpdateMask != nil
+	return x.xxx_hidden_UpdateMask != nil
 }
 
 func (x *ClustersUpdateResponse) ClearObject() {
-	x.Object = nil
+	x.xxx_hidden_Object = nil
 }
 
 func (x *ClustersUpdateResponse) ClearUpdateMask() {
-	x.UpdateMask = nil
+	x.xxx_hidden_UpdateMask = nil
 }
 
 type ClustersUpdateResponse_builder struct {
@@ -934,14 +947,14 @@ func (b0 ClustersUpdateResponse_builder) Build() *ClustersUpdateResponse {
 	m0 := &ClustersUpdateResponse{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.Object = b.Object
-	x.UpdateMask = b.UpdateMask
+	x.xxx_hidden_Object = b.Object
+	x.xxx_hidden_UpdateMask = b.UpdateMask
 	return m0
 }
 
 type ClustersDeleteRequest struct {
-	state         protoimpl.MessageState `protogen:"hybrid.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id string                 `protobuf:"bytes,1,opt,name=id,proto3"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -973,13 +986,13 @@ func (x *ClustersDeleteRequest) ProtoReflect() protoreflect.Message {
 
 func (x *ClustersDeleteRequest) GetId() string {
 	if x != nil {
-		return x.Id
+		return x.xxx_hidden_Id
 	}
 	return ""
 }
 
 func (x *ClustersDeleteRequest) SetId(v string) {
-	x.Id = v
+	x.xxx_hidden_Id = v
 }
 
 type ClustersDeleteRequest_builder struct {
@@ -992,12 +1005,12 @@ func (b0 ClustersDeleteRequest_builder) Build() *ClustersDeleteRequest {
 	m0 := &ClustersDeleteRequest{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.Id = b.Id
+	x.xxx_hidden_Id = b.Id
 	return m0
 }
 
 type ClustersDeleteResponse struct {
-	state         protoimpl.MessageState `protogen:"hybrid.v1"`
+	state         protoimpl.MessageState `protogen:"opaque.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
