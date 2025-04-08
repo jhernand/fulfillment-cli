@@ -17,7 +17,7 @@
 // 	protoc        (unknown)
 // source: events/v1/events_service.proto
 
-//go:build !protoopaque
+//go:build protoopaque
 
 package eventsv1
 
@@ -37,23 +37,12 @@ const (
 )
 
 type EventsWatchRequest struct {
-	state protoimpl.MessageState `protogen:"hybrid.v1"`
-	// Filter criteria.
-	//
-	// The value of this parameter is a [CEL](https://cel.dev) boolean expression. The `event` variable will contain the
-	// fields of the event. If the result of the expression is `true` then the event will be sent by the server. For
-	// example, to receive only the events that indicate that a cluster order has been modified and is now in the
-	// fulfilled state:
-	//
-	// ```
-	// event.type == EVENT_TYPE_OBJECT_CREATED && event.cluster_order.status.state == CLUSTER_ORDER_STATE_FULFILLED
-	// ```
-	//
-	// If this isn't provided, or if the value is empty, then all the events that the user has permission to see will be
-	// sent by the server.
-	Filter        *string `protobuf:"bytes,1,opt,name=filter,proto3,oneof" json:"filter,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                  protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Filter      *string                `protobuf:"bytes,1,opt,name=filter,proto3,oneof"`
+	XXX_raceDetectHookData protoimpl.RaceDetectHookData
+	XXX_presence           [1]uint32
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *EventsWatchRequest) Reset() {
@@ -82,25 +71,30 @@ func (x *EventsWatchRequest) ProtoReflect() protoreflect.Message {
 }
 
 func (x *EventsWatchRequest) GetFilter() string {
-	if x != nil && x.Filter != nil {
-		return *x.Filter
+	if x != nil {
+		if x.xxx_hidden_Filter != nil {
+			return *x.xxx_hidden_Filter
+		}
+		return ""
 	}
 	return ""
 }
 
 func (x *EventsWatchRequest) SetFilter(v string) {
-	x.Filter = &v
+	x.xxx_hidden_Filter = &v
+	protoimpl.X.SetPresent(&(x.XXX_presence[0]), 0, 1)
 }
 
 func (x *EventsWatchRequest) HasFilter() bool {
 	if x == nil {
 		return false
 	}
-	return x.Filter != nil
+	return protoimpl.X.Present(&(x.XXX_presence[0]), 0)
 }
 
 func (x *EventsWatchRequest) ClearFilter() {
-	x.Filter = nil
+	protoimpl.X.ClearPresent(&(x.XXX_presence[0]), 0)
+	x.xxx_hidden_Filter = nil
 }
 
 type EventsWatchRequest_builder struct {
@@ -126,15 +120,18 @@ func (b0 EventsWatchRequest_builder) Build() *EventsWatchRequest {
 	m0 := &EventsWatchRequest{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.Filter = b.Filter
+	if b.Filter != nil {
+		protoimpl.X.SetPresentNonAtomic(&(x.XXX_presence[0]), 0, 1)
+		x.xxx_hidden_Filter = b.Filter
+	}
 	return m0
 }
 
 type EventsWatchResponse struct {
-	state         protoimpl.MessageState `protogen:"hybrid.v1"`
-	Event         *Event                 `protobuf:"bytes,1,opt,name=event,proto3" json:"event,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state            protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Event *Event                 `protobuf:"bytes,1,opt,name=event,proto3"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
 }
 
 func (x *EventsWatchResponse) Reset() {
@@ -164,24 +161,24 @@ func (x *EventsWatchResponse) ProtoReflect() protoreflect.Message {
 
 func (x *EventsWatchResponse) GetEvent() *Event {
 	if x != nil {
-		return x.Event
+		return x.xxx_hidden_Event
 	}
 	return nil
 }
 
 func (x *EventsWatchResponse) SetEvent(v *Event) {
-	x.Event = v
+	x.xxx_hidden_Event = v
 }
 
 func (x *EventsWatchResponse) HasEvent() bool {
 	if x == nil {
 		return false
 	}
-	return x.Event != nil
+	return x.xxx_hidden_Event != nil
 }
 
 func (x *EventsWatchResponse) ClearEvent() {
-	x.Event = nil
+	x.xxx_hidden_Event = nil
 }
 
 type EventsWatchResponse_builder struct {
@@ -194,7 +191,7 @@ func (b0 EventsWatchResponse_builder) Build() *EventsWatchResponse {
 	m0 := &EventsWatchResponse{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.Event = b.Event
+	x.xxx_hidden_Event = b.Event
 	return m0
 }
 

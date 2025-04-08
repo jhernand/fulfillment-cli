@@ -17,7 +17,7 @@
 // 	protoc        (unknown)
 // source: events/v1/event_type.proto
 
-//go:build !protoopaque
+//go:build protoopaque
 
 package eventsv1
 
@@ -95,21 +95,12 @@ func (x EventType) Number() protoreflect.EnumNumber {
 
 // Represents events delivered by the server.
 type Event struct {
-	state protoimpl.MessageState `protogen:"hybrid.v1"`
-	// Unique identifier of the event.
-	Id string `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	// Type of event.
-	Type EventType `protobuf:"varint,2,opt,name=type,proto3,enum=events.v1.EventType" json:"type,omitempty"`
-	// Payload of the event.
-	//
-	// Types that are valid to be assigned to Payload:
-	//
-	//	*Event_Cluster
-	//	*Event_ClusterOrder
-	//	*Event_ClusterTemplate
-	Payload       isEvent_Payload `protobuf_oneof:"payload"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state              protoimpl.MessageState `protogen:"opaque.v1"`
+	xxx_hidden_Id      string                 `protobuf:"bytes,1,opt,name=id,proto3"`
+	xxx_hidden_Type    EventType              `protobuf:"varint,2,opt,name=type,proto3,enum=events.v1.EventType"`
+	xxx_hidden_Payload isEvent_Payload        `protobuf_oneof:"payload"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *Event) Reset() {
@@ -139,28 +130,21 @@ func (x *Event) ProtoReflect() protoreflect.Message {
 
 func (x *Event) GetId() string {
 	if x != nil {
-		return x.Id
+		return x.xxx_hidden_Id
 	}
 	return ""
 }
 
 func (x *Event) GetType() EventType {
 	if x != nil {
-		return x.Type
+		return x.xxx_hidden_Type
 	}
 	return EventType_EVENT_TYPE_UNSPECIFIED
 }
 
-func (x *Event) GetPayload() isEvent_Payload {
-	if x != nil {
-		return x.Payload
-	}
-	return nil
-}
-
 func (x *Event) GetCluster() *v1.Cluster {
 	if x != nil {
-		if x, ok := x.Payload.(*Event_Cluster); ok {
+		if x, ok := x.xxx_hidden_Payload.(*event_Cluster); ok {
 			return x.Cluster
 		}
 	}
@@ -169,7 +153,7 @@ func (x *Event) GetCluster() *v1.Cluster {
 
 func (x *Event) GetClusterOrder() *v1.ClusterOrder {
 	if x != nil {
-		if x, ok := x.Payload.(*Event_ClusterOrder); ok {
+		if x, ok := x.xxx_hidden_Payload.(*event_ClusterOrder); ok {
 			return x.ClusterOrder
 		}
 	}
@@ -178,7 +162,7 @@ func (x *Event) GetClusterOrder() *v1.ClusterOrder {
 
 func (x *Event) GetClusterTemplate() *v1.ClusterTemplate {
 	if x != nil {
-		if x, ok := x.Payload.(*Event_ClusterTemplate); ok {
+		if x, ok := x.xxx_hidden_Payload.(*event_ClusterTemplate); ok {
 			return x.ClusterTemplate
 		}
 	}
@@ -186,49 +170,49 @@ func (x *Event) GetClusterTemplate() *v1.ClusterTemplate {
 }
 
 func (x *Event) SetId(v string) {
-	x.Id = v
+	x.xxx_hidden_Id = v
 }
 
 func (x *Event) SetType(v EventType) {
-	x.Type = v
+	x.xxx_hidden_Type = v
 }
 
 func (x *Event) SetCluster(v *v1.Cluster) {
 	if v == nil {
-		x.Payload = nil
+		x.xxx_hidden_Payload = nil
 		return
 	}
-	x.Payload = &Event_Cluster{v}
+	x.xxx_hidden_Payload = &event_Cluster{v}
 }
 
 func (x *Event) SetClusterOrder(v *v1.ClusterOrder) {
 	if v == nil {
-		x.Payload = nil
+		x.xxx_hidden_Payload = nil
 		return
 	}
-	x.Payload = &Event_ClusterOrder{v}
+	x.xxx_hidden_Payload = &event_ClusterOrder{v}
 }
 
 func (x *Event) SetClusterTemplate(v *v1.ClusterTemplate) {
 	if v == nil {
-		x.Payload = nil
+		x.xxx_hidden_Payload = nil
 		return
 	}
-	x.Payload = &Event_ClusterTemplate{v}
+	x.xxx_hidden_Payload = &event_ClusterTemplate{v}
 }
 
 func (x *Event) HasPayload() bool {
 	if x == nil {
 		return false
 	}
-	return x.Payload != nil
+	return x.xxx_hidden_Payload != nil
 }
 
 func (x *Event) HasCluster() bool {
 	if x == nil {
 		return false
 	}
-	_, ok := x.Payload.(*Event_Cluster)
+	_, ok := x.xxx_hidden_Payload.(*event_Cluster)
 	return ok
 }
 
@@ -236,7 +220,7 @@ func (x *Event) HasClusterOrder() bool {
 	if x == nil {
 		return false
 	}
-	_, ok := x.Payload.(*Event_ClusterOrder)
+	_, ok := x.xxx_hidden_Payload.(*event_ClusterOrder)
 	return ok
 }
 
@@ -244,29 +228,29 @@ func (x *Event) HasClusterTemplate() bool {
 	if x == nil {
 		return false
 	}
-	_, ok := x.Payload.(*Event_ClusterTemplate)
+	_, ok := x.xxx_hidden_Payload.(*event_ClusterTemplate)
 	return ok
 }
 
 func (x *Event) ClearPayload() {
-	x.Payload = nil
+	x.xxx_hidden_Payload = nil
 }
 
 func (x *Event) ClearCluster() {
-	if _, ok := x.Payload.(*Event_Cluster); ok {
-		x.Payload = nil
+	if _, ok := x.xxx_hidden_Payload.(*event_Cluster); ok {
+		x.xxx_hidden_Payload = nil
 	}
 }
 
 func (x *Event) ClearClusterOrder() {
-	if _, ok := x.Payload.(*Event_ClusterOrder); ok {
-		x.Payload = nil
+	if _, ok := x.xxx_hidden_Payload.(*event_ClusterOrder); ok {
+		x.xxx_hidden_Payload = nil
 	}
 }
 
 func (x *Event) ClearClusterTemplate() {
-	if _, ok := x.Payload.(*Event_ClusterTemplate); ok {
-		x.Payload = nil
+	if _, ok := x.xxx_hidden_Payload.(*event_ClusterTemplate); ok {
+		x.xxx_hidden_Payload = nil
 	}
 }
 
@@ -279,12 +263,12 @@ func (x *Event) WhichPayload() case_Event_Payload {
 	if x == nil {
 		return Event_Payload_not_set_case
 	}
-	switch x.Payload.(type) {
-	case *Event_Cluster:
+	switch x.xxx_hidden_Payload.(type) {
+	case *event_Cluster:
 		return Event_Cluster_case
-	case *Event_ClusterOrder:
+	case *event_ClusterOrder:
 		return Event_ClusterOrder_case
-	case *Event_ClusterTemplate:
+	case *event_ClusterTemplate:
 		return Event_ClusterTemplate_case
 	default:
 		return Event_Payload_not_set_case
@@ -300,27 +284,27 @@ type Event_builder struct {
 	Type EventType
 	// Payload of the event.
 
-	// Fields of oneof Payload:
+	// Fields of oneof xxx_hidden_Payload:
 	Cluster         *v1.Cluster
 	ClusterOrder    *v1.ClusterOrder
 	ClusterTemplate *v1.ClusterTemplate
-	// -- end of Payload
+	// -- end of xxx_hidden_Payload
 }
 
 func (b0 Event_builder) Build() *Event {
 	m0 := &Event{}
 	b, x := &b0, m0
 	_, _ = b, x
-	x.Id = b.Id
-	x.Type = b.Type
+	x.xxx_hidden_Id = b.Id
+	x.xxx_hidden_Type = b.Type
 	if b.Cluster != nil {
-		x.Payload = &Event_Cluster{b.Cluster}
+		x.xxx_hidden_Payload = &event_Cluster{b.Cluster}
 	}
 	if b.ClusterOrder != nil {
-		x.Payload = &Event_ClusterOrder{b.ClusterOrder}
+		x.xxx_hidden_Payload = &event_ClusterOrder{b.ClusterOrder}
 	}
 	if b.ClusterTemplate != nil {
-		x.Payload = &Event_ClusterTemplate{b.ClusterTemplate}
+		x.xxx_hidden_Payload = &event_ClusterTemplate{b.ClusterTemplate}
 	}
 	return m0
 }
@@ -339,23 +323,23 @@ type isEvent_Payload interface {
 	isEvent_Payload()
 }
 
-type Event_Cluster struct {
+type event_Cluster struct {
 	Cluster *v1.Cluster `protobuf:"bytes,3,opt,name=cluster,proto3,oneof"`
 }
 
-type Event_ClusterOrder struct {
+type event_ClusterOrder struct {
 	ClusterOrder *v1.ClusterOrder `protobuf:"bytes,4,opt,name=cluster_order,json=clusterOrder,proto3,oneof"`
 }
 
-type Event_ClusterTemplate struct {
+type event_ClusterTemplate struct {
 	ClusterTemplate *v1.ClusterTemplate `protobuf:"bytes,5,opt,name=cluster_template,json=clusterTemplate,proto3,oneof"`
 }
 
-func (*Event_Cluster) isEvent_Payload() {}
+func (*event_Cluster) isEvent_Payload() {}
 
-func (*Event_ClusterOrder) isEvent_Payload() {}
+func (*event_ClusterOrder) isEvent_Payload() {}
 
-func (*Event_ClusterTemplate) isEvent_Payload() {}
+func (*event_ClusterTemplate) isEvent_Payload() {}
 
 var File_events_v1_event_type_proto protoreflect.FileDescriptor
 
@@ -436,9 +420,9 @@ func file_events_v1_event_type_proto_init() {
 		return
 	}
 	file_events_v1_event_type_proto_msgTypes[0].OneofWrappers = []any{
-		(*Event_Cluster)(nil),
-		(*Event_ClusterOrder)(nil),
-		(*Event_ClusterTemplate)(nil),
+		(*event_Cluster)(nil),
+		(*event_ClusterOrder)(nil),
+		(*event_ClusterTemplate)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
