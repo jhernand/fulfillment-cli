@@ -11,29 +11,19 @@ Unless required by applicable law or agreed to in writing, software distributed 
 language governing permissions and limitations under the License.
 */
 
-package cmd
+package describe
 
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/innabox/fulfillment-cli/internal/cmd/create"
-	"github.com/innabox/fulfillment-cli/internal/cmd/describe"
-	"github.com/innabox/fulfillment-cli/internal/cmd/get"
-	"github.com/innabox/fulfillment-cli/internal/cmd/login"
-	"github.com/innabox/fulfillment-cli/internal/cmd/logout"
+	"github.com/innabox/fulfillment-cli/internal/cmd/describe/clusterorder"
 )
 
-func Root() *cobra.Command {
+func Cmd() *cobra.Command {
 	result := &cobra.Command{
-		Use:           "fulfillment-cli",
-		Short:         "Command line interface for the fulfillment API",
-		SilenceUsage:  true,
-		SilenceErrors: true,
+		Use:   "describe",
+		Short: "Describe a resource",
 	}
-	result.AddCommand(create.Cmd())
-	result.AddCommand(describe.Cmd())
-	result.AddCommand(get.Cmd())
-	result.AddCommand(login.Cmd())
-	result.AddCommand(logout.Cmd())
+	result.AddCommand(clusterorder.Cmd())
 	return result
 }
