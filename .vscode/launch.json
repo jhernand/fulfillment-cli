@@ -1,0 +1,35 @@
+{
+        "version": "0.2.0",
+        "configurations": [
+                {
+                        "name": "get clustertemplates",
+                        "type": "go",
+                        "request": "launch",
+                        "mode": "auto",
+                        "program": "${workspaceFolder}",
+                        "args": [
+                                "get", "clustertemplates"
+                        ]
+                },
+                {
+                        "name": "get clusterorders",
+                        "type": "go",
+                        "request": "launch",
+                        "mode": "auto",
+                        "program": "${workspaceFolder}",
+                        "args": [
+                                "get", "clusterorders"
+                        ]
+                },
+                {
+                        "name": "get clusters",
+                        "type": "go",
+                        "request": "launch",
+                        "mode": "auto",
+                        "program": "${workspaceFolder}",
+                        "args": [
+                                "get", "clusters"
+                        ]
+                }
+        ]
+}
