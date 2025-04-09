@@ -11,12 +11,11 @@ Unless required by applicable law or agreed to in writing, software distributed 
 language governing permissions and limitations under the License.
 */
 
-package clusterorder
+package cluster
 
 import (
 	"fmt"
 	"os"
-	"strings"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
@@ -28,9 +27,9 @@ import (
 func Cmd() *cobra.Command {
 	runner := &runnerContext{}
 	result := &cobra.Command{
-		Use:     "clusterorder [flags]",
-		Aliases: []string{"clusterorders"},
-		Short:   "Get cluster orders",
+		Use:     "cluster [flags] ID",
+		Aliases: []string{"clusters"},
+		Short:   "Retrieve a cluster kubeconfig",
 		RunE:    runner.run,
 	}
 	return result
@@ -40,6 +39,16 @@ type runnerContext struct {
 }
 
 func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
+        // Check that there is exactly one cluster ID specified
+        if len(args) != 1 {
+	        fmt.Fprintf(
+                        os.Stderr,
+                        "Expected exactly one cluster ID\n",
+	        )
+                os.Exit(1)
+        }
+	clusterId := args[0]
+
 	// Get the context:
 	ctx := cmd.Context()
 
@@ -58,39 +67,20 @@ func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create gRPC connection: %w", err)
 	}
 
-	// Create the client for the cluster orders service:
-	client := fulfillmentv1.NewClusterOrdersClient(conn)
+	// Create the client for the clusters service:
+	client := fulfillmentv1.NewClustersClient(conn)
 
-	// Get the list of orders:
-	response, err := client.List(ctx, &fulfillmentv1.ClusterOrdersListRequest{})
+	// Get the kubeconfig:
+	response, err := client.GetKubeconfig(ctx, &fulfillmentv1.ClustersGetKubeconfigRequest{
+		Id: clusterId,
+	})
 	if err != nil {
-		return fmt.Errorf("failed to list orders: %w", err)
+		return fmt.Errorf("failed to describe order: %w", err)
 	}
 
 	// Display the orders:
 	writer := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintf(writer, "ID\tTEMPLATE ID\tSTATE\tCLUSTER ID\n")
-	for _, order := range response.Items {
-		templateId := "-"
-		if order.Spec != nil {
-			templateId = order.Spec.TemplateId
-		}
-		state := "-"
-		clusterId := "-"
-		if order.Status != nil {
-			state = order.Status.State.String()
-			state = strings.Replace(state, "CLUSTER_ORDER_STATE_", "", -1)
-			clusterId = order.Status.GetClusterId()
-		}
-		fmt.Fprintf(
-			writer,
-			"%s\t%s\t%s\t%s\n",
-			order.Id,
-			templateId,
-			state,
-			clusterId,
-		)
-	}
+	fmt.Fprintf(writer, "Kube Config:\t%s\n", response.Kubeconfig)
 	writer.Flush()
 
 	return nil

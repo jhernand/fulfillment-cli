@@ -11,23 +11,19 @@ Unless required by applicable law or agreed to in writing, software distributed 
 language governing permissions and limitations under the License.
 */
 
-package get
+package getkubeconfig
 
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/innabox/fulfillment-cli/internal/cmd/get/cluster"
-	"github.com/innabox/fulfillment-cli/internal/cmd/get/clusterorder"
-	"github.com/innabox/fulfillment-cli/internal/cmd/get/clustertemplate"
+	"github.com/innabox/fulfillment-cli/internal/cmd/getkubeconfig/cluster"
 )
 
 func Cmd() *cobra.Command {
 	result := &cobra.Command{
-		Use:   "get",
-		Short: "Get resources",
+		Use:   "getkubeconfig",
+		Short: "Get kubeconfig",
 	}
 	result.AddCommand(cluster.Cmd())
-	result.AddCommand(clusterorder.Cmd())
-	result.AddCommand(clustertemplate.Cmd())
 	return result
 }

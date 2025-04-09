@@ -11,12 +11,11 @@ Unless required by applicable law or agreed to in writing, software distributed 
 language governing permissions and limitations under the License.
 */
 
-package clusterorder
+package cluster
 
 import (
 	"fmt"
 	"os"
-	"strings"
 	"text/tabwriter"
 
 	"github.com/spf13/cobra"
@@ -28,9 +27,9 @@ import (
 func Cmd() *cobra.Command {
 	runner := &runnerContext{}
 	result := &cobra.Command{
-		Use:     "clusterorder [flags]",
-		Aliases: []string{"clusterorders"},
-		Short:   "Get cluster orders",
+		Use:     "cluster [flags]",
+		Aliases: []string{"clusters"},
+		Short:   "Get clusters",
 		RunE:    runner.run,
 	}
 	return result
@@ -58,37 +57,34 @@ func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create gRPC connection: %w", err)
 	}
 
-	// Create the client for the cluster orders service:
-	client := fulfillmentv1.NewClusterOrdersClient(conn)
+	// Create the client for the clusters service:
+	client := fulfillmentv1.NewClustersClient(conn)
 
-	// Get the list of orders:
-	response, err := client.List(ctx, &fulfillmentv1.ClusterOrdersListRequest{})
+	// Get the list of clusters:
+	response, err := client.List(ctx, &fulfillmentv1.ClustersListRequest{})
 	if err != nil {
-		return fmt.Errorf("failed to list orders: %w", err)
+		return fmt.Errorf("failed to list clusters: %w", err)
 	}
 
-	// Display the orders:
+	// Display the clusters:
 	writer := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintf(writer, "ID\tTEMPLATE ID\tSTATE\tCLUSTER ID\n")
-	for _, order := range response.Items {
-		templateId := "-"
-		if order.Spec != nil {
-			templateId = order.Spec.TemplateId
-		}
+	fmt.Fprintf(writer, "ID\tSTATE\tAPI URL\tCONSOLE URL\n")
+	for _, cluster := range response.Items {
 		state := "-"
-		clusterId := "-"
-		if order.Status != nil {
-			state = order.Status.State.String()
-			state = strings.Replace(state, "CLUSTER_ORDER_STATE_", "", -1)
-			clusterId = order.Status.GetClusterId()
+		apiUrl := "-"
+		consoleUrl := "-"
+		if cluster.Status != nil {
+			state = cluster.Status.State.String()
+			apiUrl = cluster.Status.GetApiUrl()
+			consoleUrl = cluster.Status.GetConsoleUrl()
 		}
 		fmt.Fprintf(
 			writer,
 			"%s\t%s\t%s\t%s\n",
-			order.Id,
-			templateId,
+			cluster.Id,
 			state,
-			clusterId,
+			apiUrl,
+			consoleUrl,
 		)
 	}
 	writer.Flush()
