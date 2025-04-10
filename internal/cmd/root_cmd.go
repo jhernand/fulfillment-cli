@@ -17,6 +17,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/innabox/fulfillment-cli/internal/cmd/create"
+	"github.com/innabox/fulfillment-cli/internal/cmd/delete"
 	"github.com/innabox/fulfillment-cli/internal/cmd/describe"
 	"github.com/innabox/fulfillment-cli/internal/cmd/get"
 	"github.com/innabox/fulfillment-cli/internal/cmd/getkubeconfig"
@@ -32,6 +33,7 @@ func Root() *cobra.Command {
 		SilenceErrors: true,
 	}
 	result.AddCommand(create.Cmd())
+	result.AddCommand(delete.Cmd())
 	result.AddCommand(describe.Cmd())
 	result.AddCommand(get.Cmd())
 	result.AddCommand(getkubeconfig.Cmd())
