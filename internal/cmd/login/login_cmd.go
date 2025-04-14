@@ -17,6 +17,7 @@ import (
 	"fmt"
 
 	"github.com/innabox/fulfillment-cli/internal/config"
+	"github.com/innabox/fulfillment-cli/internal/logging"
 	"github.com/spf13/cobra"
 )
 
@@ -33,6 +34,12 @@ func Cmd() *cobra.Command {
 		"token",
 		"",
 		"Authentication token",
+	)
+	flags.StringVar(
+		&runner.tokenScript,
+		"token-script",
+		"",
+		"Shell script that will be executed to obtain the token",
 	)
 	flags.BoolVar(
 		&runner.plaintext,
@@ -56,13 +63,18 @@ func Cmd() *cobra.Command {
 }
 
 type runnerContext struct {
-	token     string
-	plaintext bool
-	insecure  bool
-	address   string
+	token       string
+	tokenScript string
+	plaintext   bool
+	insecure    bool
+	address     string
 }
 
 func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
+	// Get the logger:
+	logger := logging.LoggerFromContext(cmd.Context())
+	logger.Info("Here we go!")
+
 	// Load the configuration:
 	cfg, err := config.Load()
 	if err != nil {
@@ -79,6 +91,7 @@ func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
 
 	// Update the configuration with the values given in the command line:
 	cfg.Token = c.token
+	cfg.TokenScript = c.tokenScript
 	cfg.Plaintext = c.plaintext
 	cfg.Insecure = c.insecure
 	cfg.Address = c.address

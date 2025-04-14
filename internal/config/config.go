@@ -17,9 +17,11 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 
+	"github.com/innabox/fulfillment-cli/internal/auth"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -31,10 +33,11 @@ import (
 
 // Config is the type used to store the configuration of the client.
 type Config struct {
-	Token     string `json:"token,omitempty"`
-	Plaintext bool   `json:"plaintext,omitempty"`
-	Insecure  bool   `json:"insecure,omitempty"`
-	Address   string `json:"address,omitempty"`
+	Token       string `json:"token,omitempty"`
+	TokenScript string `json:"token_script"`
+	Plaintext   bool   `json:"plaintext,omitempty"`
+	Insecure    bool   `json:"insecure,omitempty"`
+	Address     string `json:"address,omitempty"`
 }
 
 // Load loads the configuration from the configuration file.
@@ -104,6 +107,8 @@ func Location() (result string, err error) {
 
 // Connect creates a gRPC connection from the configuration.
 func (c *Config) Connect() (result *grpc.ClientConn, err error) {
+	logger := slog.Default()
+
 	var dialOpts []grpc.DialOption
 
 	// Configure use of TLS:
@@ -131,14 +136,36 @@ func (c *Config) Connect() (result *grpc.ClientConn, err error) {
 	}
 
 	// Confgure use of token:
-	if c.Token != "" {
+	var tokenSource oauth2.TokenSource
+	if c.TokenScript != "" {
+		tokenSource, err = auth.NewScriptTokenSource().
+			SetLogger(logger).
+			SetScript(c.TokenScript).
+			SetTokenLoadFunc(func() (token string, err error) {
+				token = c.Token
+				return
+			}).
+			SetTokenSaveFunc(func(token string) error {
+				c.Token = token
+				return Save(c)
+			}).
+			Build()
+		if err != nil {
+			return
+		}
+	} else if c.Token != "" {
 		token := &oauth2.Token{
 			AccessToken: c.Token,
 		}
-		creds := oauth.TokenSource{
+		tokenSource = oauth.TokenSource{
 			TokenSource: oauth2.StaticTokenSource(token),
 		}
-		dialOpts = append(dialOpts, grpc.WithPerRPCCredentials(creds))
+	}
+	if tokenSource != nil {
+		token := oauth.TokenSource{
+			TokenSource: tokenSource,
+		}
+		dialOpts = append(dialOpts, grpc.WithPerRPCCredentials(token))
 	}
 
 	result, err = grpc.NewClient(c.Address, dialOpts...)
