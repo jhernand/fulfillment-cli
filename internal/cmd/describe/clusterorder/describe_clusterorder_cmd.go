@@ -40,14 +40,14 @@ type runnerContext struct {
 }
 
 func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
-        // Check that there is exactly one cluster order ID specified
-        if len(args) != 1 {
-	        fmt.Fprintf(
-                        os.Stderr,
-                        "Expected exactly one cluster order ID\n",
-	        )
-                os.Exit(1)
-        }
+	// Check that there is exactly one cluster order ID specified
+	if len(args) != 1 {
+		fmt.Fprintf(
+			os.Stderr,
+			"Expected exactly one cluster order ID\n",
+		)
+		os.Exit(1)
+	}
 	orderId := args[0]
 
 	// Get the context:
@@ -84,11 +84,11 @@ func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
 	order := response.Object
 	templateId := "-"
 	if order.Spec != nil {
-	   	templateId = order.Spec.TemplateId
+		templateId = order.Spec.TemplateId
 	}
 	state := "-"
 	if order.Status != nil {
-	        state = order.Status.State.String()
+		state = order.Status.State.String()
 		state = strings.Replace(state, "CLUSTER_ORDER_STATE_", "", -1)
 	}
 	fmt.Fprintf(writer, "ID:\t%s\n", order.Id)
