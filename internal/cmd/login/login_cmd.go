@@ -34,6 +34,16 @@ func Cmd() *cobra.Command {
 		"",
 		"Authentication token",
 	)
+	flags.StringVar(
+		&runner.tokenScript,
+		"token-script",
+		"",
+		"Shell command that will be executed to obtain the token. For example, to automatically get the "+
+			"token of the Kubernetes 'client' service account of the 'example' namespace the value "+
+			"could be 'kubectl create token -n example client --duration 1h'. Note that is important "+
+			"to quote this shell command correctly, as it will be passed to your shell for "+
+			"execution.",
+	)
 	flags.BoolVar(
 		&runner.plaintext,
 		"plaintext",
@@ -56,10 +66,11 @@ func Cmd() *cobra.Command {
 }
 
 type runnerContext struct {
-	token     string
-	plaintext bool
-	insecure  bool
-	address   string
+	token       string
+	tokenScript string
+	plaintext   bool
+	insecure    bool
+	address     string
 }
 
 func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
@@ -79,6 +90,7 @@ func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
 
 	// Update the configuration with the values given in the command line:
 	cfg.Token = c.token
+	cfg.TokenScript = c.tokenScript
 	cfg.Plaintext = c.plaintext
 	cfg.Insecure = c.insecure
 	cfg.Address = c.address

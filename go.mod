@@ -3,6 +3,7 @@ module github.com/innabox/fulfillment-cli
 go 1.22.9
 
 require (
+	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.1
 	github.com/onsi/ginkgo/v2 v2.22.2
 	github.com/onsi/gomega v1.36.2
