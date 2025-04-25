@@ -19,13 +19,12 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 	"path"
-	"sort"
 	"strings"
 	"text/tabwriter"
 
-	"github.com/gertd/go-pluralize"
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
@@ -40,6 +39,8 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/innabox/fulfillment-cli/internal/config"
+	"github.com/innabox/fulfillment-cli/internal/logging"
+	"github.com/innabox/fulfillment-cli/internal/reflection"
 )
 
 //go:embed tables
@@ -52,21 +53,8 @@ const (
 	outputFormatYaml  = "yaml"
 )
 
-// Frequently used names:
-const (
-	// Methods:
-	getMethodName  = protoreflect.Name("Get")
-	listMethodName = protoreflect.Name("List")
-
-	// Fields:
-	idFieldName     = protoreflect.Name("id")
-	itemsFieldName  = protoreflect.Name("items")
-	objectFieldName = protoreflect.Name("object")
-)
-
 func Cmd() *cobra.Command {
 	runner := &runnerContext{
-		pluralizer: pluralize.NewClient(),
 		marshalOptions: protojson.MarshalOptions{
 			UseProtoNames: true,
 		},
@@ -78,7 +66,7 @@ func Cmd() *cobra.Command {
 	}
 	flags := result.Flags()
 	flags.StringVarP(
-		&runner.outputFormat,
+		&runner.format,
 		"output",
 		"o",
 		outputFormatTable,
@@ -91,62 +79,21 @@ func Cmd() *cobra.Command {
 }
 
 type runnerContext struct {
-	outputFormat         string
-	grpcConn             *grpc.ClientConn
-	marshalOptions       protojson.MarshalOptions
-	pluralizer           *pluralize.Client
-	objectType           string
-	objectDesc           protoreflect.MessageDescriptor
-	serviceDesc          protoreflect.ServiceDescriptor
-	listMethodDesc       protoreflect.MethodDescriptor
-	listMethodPath       string
-	listRequestTemplate  proto.Message
-	listResponseTemplate proto.Message
-	listItemsFieldDesc   protoreflect.FieldDescriptor
-	getMethodDesc        protoreflect.MethodDescriptor
-	getMethodPath        string
-	getRequestTemplate   proto.Message
-	getResponseTemplate  proto.Message
-	getIdFieldDesc       protoreflect.FieldDescriptor
-	getObjectFieldDesc   protoreflect.FieldDescriptor
+	logger         *slog.Logger
+	format         string
+	conn           *grpc.ClientConn
+	marshalOptions protojson.MarshalOptions
+	helper         *reflection.ObjectHelper
 }
 
 func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
+	var err error
+
 	// Get the context:
 	ctx := cmd.Context()
 
-	// Check that the object type has been specified:
-	if len(args) == 0 {
-		objectDescs := c.findObjectTypes()
-		objectTypes := make([]string, len(objectDescs))
-		for i, objectDesc := range objectDescs {
-			objectTypes[i] = c.pluralizer.Plural(strings.ToLower(string(objectDesc.Name())))
-		}
-		sort.Strings(objectTypes)
-		fmt.Printf("You must specify the type of object to get.\n")
-		fmt.Printf("\n")
-		fmt.Printf("The following object types are available:\n")
-		fmt.Printf("\n")
-		for _, objectType := range objectTypes {
-			fmt.Printf("- %s\n", objectType)
-		}
-		fmt.Printf("\n")
-		fmt.Printf("For example, to get the list of cluster templates:\n")
-		fmt.Printf("\n")
-		fmt.Printf("%s get clustertemplates\n", os.Args[0])
-		fmt.Printf("\n")
-		fmt.Printf("Use the '--help' option to get more details about the command.\n")
-		return nil
-	}
-	c.objectType = args[0]
-
-	// Check the flags:
-	if c.outputFormat != outputFormatTable && c.outputFormat != outputFormatJson && c.outputFormat != outputFormatYaml {
-		return fmt.Errorf(
-			"unknown output format '%s', should be '%s', '%s' or '%s'",
-			c.outputFormat, outputFormatTable, outputFormatJson, outputFormatYaml,
-		)
-	}
+	// Get the logger:
+	c.logger = logging.LoggerFromContext(ctx)
 
 	// Get the configuration:
 	cfg, err := config.Load()
@@ -158,17 +105,60 @@ func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Create the gRPC connection from the configuration:
-	c.grpcConn, err = cfg.Connect(ctx)
+	c.conn, err = cfg.Connect(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create gRPC connection: %w", err)
 	}
-	defer c.grpcConn.Close()
+	defer c.conn.Close()
 
-	// Analyze the protocol buffers descriptors to find the information that we need, like the name of the method,
-	// the request and response types, and the type of the items.
-	err = c.analyzeDescriptors()
+	// Create the reflection helper:
+	helper, err := reflection.NewHelper().
+		SetLogger(c.logger).
+		SetConnection(c.conn).
+		Build()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create reflection tool: %w", err)
+	}
+
+	// Check that the object type has been specified:
+	if len(args) == 0 {
+		plurals := helper.Plurals()
+		fmt.Printf("You must specify the type of object to get.\n")
+		fmt.Printf("\n")
+		fmt.Printf("The following object types are available:\n")
+		fmt.Printf("\n")
+		for _, plural := range plurals {
+			fmt.Printf("- %s\n", plural)
+		}
+		fmt.Printf("\n")
+		fmt.Printf("For example, to get the list of cluster templates:\n")
+		fmt.Printf("\n")
+		fmt.Printf("%s get clustertemplates\n", os.Args[0])
+		fmt.Printf("\n")
+		fmt.Printf("Use the '--help' option to get more details about the command.\n")
+		return nil
+	}
+
+	// Get the object helper:
+	c.helper = helper.Lookup(args[0])
+	if c.helper == nil {
+		plurals := helper.Plurals()
+		fmt.Printf("There is no object type named '%s'.\n", args[0])
+		fmt.Printf("\n")
+		fmt.Printf("The following object types are available:\n")
+		fmt.Printf("\n")
+		for _, plural := range plurals {
+			fmt.Printf("- %s\n", plural)
+		}
+		return nil
+	}
+
+	// Check the flags:
+	if c.format != outputFormatTable && c.format != outputFormatJson && c.format != outputFormatYaml {
+		return fmt.Errorf(
+			"unknown output format '%s', should be '%s', '%s' or '%s'",
+			c.format, outputFormatTable, outputFormatJson, outputFormatYaml,
+		)
 	}
 
 	// If there additional arguments in the command line we assume they are identifiers of individual objects, so
@@ -186,7 +176,7 @@ func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
 
 	// Render the items:
 	var render func([]proto.Message) error
-	switch c.outputFormat {
+	switch c.format {
 	case outputFormatJson:
 		render = c.renderJson
 	case outputFormatYaml:
@@ -197,282 +187,27 @@ func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
 	return render(objects)
 }
 
-func (c *runnerContext) list(ctx context.Context) (result []proto.Message, err error) {
-	request := proto.Clone(c.listRequestTemplate)
-	response := proto.Clone(c.listResponseTemplate)
-	err = c.grpcConn.Invoke(ctx, c.listMethodPath, request, response)
-	if err != nil {
-		return
-	}
-	list := response.ProtoReflect().Get(c.listItemsFieldDesc).List()
-	result = make([]proto.Message, list.Len())
-	for i := range list.Len() {
-		result[i] = list.Get(i).Message().Interface()
-	}
-	return
-}
-
-func (c *runnerContext) get(ctx context.Context, ids []string) (result []proto.Message, err error) {
+func (c *runnerContext) get(ctx context.Context, ids []string) (results []proto.Message, err error) {
 	objects := make([]proto.Message, len(ids))
 	for i, id := range ids {
-		request := proto.Clone(c.getRequestTemplate)
-		request.ProtoReflect().Set(c.getIdFieldDesc, protoreflect.ValueOfString(id))
-		response := proto.Clone(c.getResponseTemplate)
-		err = c.grpcConn.Invoke(ctx, c.getMethodPath, request, response)
+		objects[i], err = c.helper.Get(ctx, id)
 		if err != nil {
-			err = fmt.Errorf("failed to get object with identifier '%s': %w", id, err)
+			return
 		}
-		objects[i] = response.ProtoReflect().Get(c.getObjectFieldDesc).Message().Interface()
 	}
-	result = objects
+	results = objects
 	return
 }
 
-// findObjectTypes finds all the message types that satisfy the conditions to be considered objects that can be handled
-// by this command.
-func (c *runnerContext) findObjectTypes() []protoreflect.MessageDescriptor {
-	var objectDescs []protoreflect.MessageDescriptor
-	protoregistry.GlobalFiles.RangeFiles(func(fileDesc protoreflect.FileDescriptor) bool {
-		serviceDescs := fileDesc.Services()
-		for i := range serviceDescs.Len() {
-			serviceDesc := serviceDescs.Get(i)
-			methodDescs := serviceDesc.Methods()
-
-			// The service must have `List` and `Get` methods:
-			listDesc := methodDescs.ByName(listMethodName)
-			getDesc := methodDescs.ByName(getMethodName)
-			if listDesc == nil || getDesc == nil {
-				continue
-			}
-
-			// The response of the `List` method must have an `items` field, and it must be an list
-			// of objects.
-			listItemsDesc := listDesc.Output().Fields().ByName(itemsFieldName)
-			if listItemsDesc == nil {
-				continue
-			}
-			if listItemsDesc.Cardinality() != protoreflect.Repeated {
-				continue
-			}
-			if listItemsDesc.Kind() != protoreflect.MessageKind {
-				continue
-			}
-
-			// The request of the `Get` method must have an `id` string field:
-			getIdDesc := getDesc.Input().Fields().ByName(idFieldName)
-			if getIdDesc == nil {
-				continue
-			}
-			if getIdDesc.Cardinality() == protoreflect.Repeated {
-				continue
-			}
-			if getIdDesc.Kind() != protoreflect.StringKind {
-				continue
-			}
-
-			// The response of the `Get` method must have an `object` message field:
-			getObjectDesc := getDesc.Output().Fields().ByName(objectFieldName)
-			if getObjectDesc == nil {
-				continue
-			}
-			if getObjectDesc.Cardinality() == protoreflect.Repeated {
-				continue
-			}
-			if getObjectDesc.Kind() != protoreflect.MessageKind {
-				continue
-			}
-
-			// This is a supported type if after the all the above checks it is the type of the
-			// `items` field of the list request and of the `object` field of the get response.
-			if listItemsDesc.Message() != getObjectDesc.Message() {
-				continue
-			}
-			objectDescs = append(objectDescs, listItemsDesc.Message())
-		}
-		return true
-	})
-	return objectDescs
-}
-
-func (c *runnerContext) analyzeDescriptors() error {
-	finders := []func() error{
-		c.findTypeDesc,
-		c.findServiceDesc,
-		c.findListMethodDescs,
-		c.findGetMethodDescs,
-	}
-	for _, finder := range finders {
-		err := finder()
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (c *runnerContext) findTypeDesc() error {
-	// In order to find the object type we try to find a protobuf message that has a name that directly or converted
-	// to plural matches the given resource type.
-	protoregistry.GlobalTypes.RangeMessages(
-		func(messageType protoreflect.MessageType) bool {
-			currentDesc := messageType.Descriptor()
-			currentSingular := string(currentDesc.Name())
-			currentPlural := c.pluralizer.Plural(currentSingular)
-			matchesSingular := strings.EqualFold(currentSingular, c.objectType)
-			matchesPlural := strings.EqualFold(currentPlural, c.objectType)
-			if matchesSingular || matchesPlural {
-				c.objectDesc = currentDesc
-				return false
-			}
-			return true
-		},
-	)
-	if c.objectDesc == nil {
-		return fmt.Errorf("failed to find a descriptor matching object type '%s'", c.objectType)
-	}
-	return nil
-}
-
-func (c *runnerContext) findServiceDesc() error {
-	// In order to find the service we assume that its name is the plural of the name of the object type. For
-	// example, if the name of the object type is `Cluster` we expect the name of the service to be `Clusters`. Then
-	// we need to iterate all the files of the package, because the protobuf reflection library doesn't provide a
-	// mechanism to directly lookup a service by name.
-	objectFullName := c.objectDesc.FullName()
-	packageName := objectFullName.Parent()
-	objectName := objectFullName.Name()
-	serviceName := protoreflect.Name(c.pluralizer.Plural(string(objectName)))
-	protoregistry.GlobalFiles.RangeFilesByPackage(
-		packageName,
-		func(fileDesc protoreflect.FileDescriptor) bool {
-			currentDesc := fileDesc.Services().ByName(serviceName)
-			if currentDesc != nil {
-				c.serviceDesc = currentDesc
-				return false
-			}
-			return true
-		},
-	)
-	if c.serviceDesc == nil {
-		return fmt.Errorf("failed to find service matching object type '%s'", c.objectType)
-	}
-	return nil
-}
-
-func (c *runnerContext) findListMethodDescs() error {
-	var err error
-
-	// Find the method:
-	c.listMethodDesc = c.serviceDesc.Methods().ByName(listMethodName)
-	if c.listMethodDesc == nil {
-		return fmt.Errorf("failed to find list method for service '%s'", c.serviceDesc.FullName())
-	}
-	c.listMethodPath = c.makeMethodPath(c.listMethodDesc)
-
-	// Create templates for the request and response messages:
-	c.listRequestTemplate, c.listResponseTemplate, err = c.makeMethodTemplates(c.listMethodDesc)
-	if err != nil {
-		return err
-	}
-
-	// Find the items field of the response message:
-	responseDesc := c.listMethodDesc.Output()
-	c.listItemsFieldDesc = responseDesc.Fields().ByName(itemsFieldName)
-	if c.listItemsFieldDesc == nil {
-		return fmt.Errorf(
-			"failed to find items field for response type '%s' of list method of service '%s'",
-			responseDesc.FullName(), c.serviceDesc.FullName(),
-		)
-	}
-	if !c.listItemsFieldDesc.IsList() {
-		return fmt.Errorf(
-			"items field of response type '%s' of list method of service '%s' isn't a list",
-			responseDesc.FullName(), c.serviceDesc.FullName(),
-		)
-	}
-
-	return nil
-}
-
-func (c *runnerContext) findGetMethodDescs() error {
-	var err error
-
-	// Find the method:
-	c.getMethodDesc = c.serviceDesc.Methods().ByName(getMethodName)
-	if c.getMethodDesc == nil {
-		return fmt.Errorf("failed to find get method for service '%s'", c.serviceDesc.FullName())
-	}
-	c.getMethodPath = c.makeMethodPath(c.getMethodDesc)
-
-	// Create templates for the request and response messages:
-	c.getRequestTemplate, c.getResponseTemplate, err = c.makeMethodTemplates(c.getMethodDesc)
-	if err != nil {
-		return err
-	}
-
-	// Find the identifier field of the request type:
-	requestDesc := c.getMethodDesc.Input()
-	c.getIdFieldDesc = requestDesc.Fields().ByName(idFieldName)
-	if c.getIdFieldDesc == nil {
-		return fmt.Errorf(
-			"failed to find identifier field for request type '%s' of get method of service '%s'",
-			requestDesc.FullName(), c.serviceDesc.FullName(),
-		)
-	}
-
-	// Find the object field of the response type:
-	responseDesc := c.getMethodDesc.Output()
-	c.getObjectFieldDesc = responseDesc.Fields().ByName(objectFieldName)
-	if c.getObjectFieldDesc == nil {
-		return fmt.Errorf(
-			"failed to find object field for response type '%s' of get method of service '%s'",
-			responseDesc.FullName(), c.serviceDesc.FullName(),
-		)
-	}
-
-	return nil
-}
-
-func (c *runnerContext) makeMethodPath(methodDesc protoreflect.MethodDescriptor) string {
-	return fmt.Sprintf("/%s/%s", methodDesc.FullName().Parent(), methodDesc.Name())
-}
-
-func (c *runnerContext) makeMethodTemplates(methodDesc protoreflect.MethodDescriptor) (requestTemplate,
-	responseTemplate proto.Message, err error) {
-	// Find the request type:
-	requestDesc := methodDesc.Input()
-	requestName := requestDesc.FullName()
-	requestType, err := protoregistry.GlobalTypes.FindMessageByName(requestName)
-	if err != nil {
-		err = fmt.Errorf(
-			"failed to find request type '%s' for method '%s': %w",
-			requestName, methodDesc.Name(), err,
-		)
-		return
-	}
-
-	// Find the response type:
-	responseDesc := methodDesc.Output()
-	responseName := responseDesc.FullName()
-	responseType, err := protoregistry.GlobalTypes.FindMessageByName(responseName)
-	if err != nil {
-		err = fmt.Errorf(
-			"failed to find response type '%s' for method '%s': %w",
-			requestName, c.serviceDesc.FullName(), err,
-		)
-		return
-	}
-
-	// Create the templates:
-	requestTemplate = requestType.New().Interface()
-	responseTemplate = responseType.New().Interface()
+func (c *runnerContext) list(ctx context.Context) (results []proto.Message, err error) {
+	results, err = c.helper.List(ctx)
 	return
 }
 
 func (c *runnerContext) findTable() (result *Table, err error) {
 	entries, err := tablesFS.ReadDir("tables")
 	if err != nil {
-		err = fmt.Errorf("failed to lookup table metadata for type '%s': %w", c.objectDesc.FullName(), err)
+		err = fmt.Errorf("failed to lookup table metadata for object type '%s': %w", c.helper.FullName(), err)
 		return
 	}
 	for _, entry := range entries {
@@ -482,7 +217,7 @@ func (c *runnerContext) findTable() (result *Table, err error) {
 			if err != nil {
 				return
 			}
-			if table.FullName == c.objectDesc.FullName() {
+			if table.FullName == c.helper.FullName() {
 				result = table
 				return
 			}
@@ -536,8 +271,8 @@ func (c *runnerContext) renderTable(objects []proto.Message) error {
 
 	// Compile the CEL programs:
 	celEnv, err := cel.NewEnv(
-		cel.Types(dynamicpb.NewMessage(c.objectDesc)),
-		cel.DeclareContextProto(c.objectDesc),
+		cel.Types(dynamicpb.NewMessage(c.helper.Descriptor())),
+		cel.DeclareContextProto(c.helper.Descriptor()),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create CEL environment: %w", err)
@@ -549,14 +284,14 @@ func (c *runnerContext) renderTable(objects []proto.Message) error {
 		if err != nil {
 			return fmt.Errorf(
 				"failed to compile CEL expression '%s' for column '%s' of type '%s': %w",
-				col.Value, col.Header, c.objectDesc.FullName(), err,
+				col.Value, col.Header, c.helper, err,
 			)
 		}
 		prg, err := celEnv.Program(ast)
 		if err != nil {
 			return fmt.Errorf(
 				"failed to create CEL program from expression '%s' for column '%s' of type '%s': %w",
-				col.Value, col.Header, c.objectDesc.FullName(), err,
+				col.Value, col.Header, c.helper, err,
 			)
 		}
 		prgs[i] = prg
@@ -590,7 +325,7 @@ func (c *runnerContext) renderTableRow(cols []*Column, prgs []cel.Program, objec
 	if err != nil {
 		err = fmt.Errorf(
 			"failed to set variables for CEL expression for type '%s': %w",
-			c.objectDesc.FullName(), err,
+			c.helper, err,
 		)
 	}
 	buffer := &bytes.Buffer{}
@@ -602,7 +337,7 @@ func (c *runnerContext) renderTableRow(cols []*Column, prgs []cel.Program, objec
 		if err != nil {
 			err = fmt.Errorf(
 				"failed to evaluate CEL expression '%s' for column '%s' of type '%s': %w",
-				col.Value, col.Header, c.objectDesc.FullName(), err,
+				col.Value, col.Header, c.helper, err,
 			)
 			return
 		}
@@ -611,7 +346,7 @@ func (c *runnerContext) renderTableRow(cols []*Column, prgs []cel.Program, objec
 		if err != nil {
 			err = fmt.Errorf(
 				"failed to render value '%s' for column '%s' of type '%s': %w",
-				out, col.Header, c.objectDesc.FullName(), err,
+				out, col.Header, c.helper, err,
 			)
 			return
 		}

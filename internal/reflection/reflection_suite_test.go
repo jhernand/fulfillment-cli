@@ -11,7 +11,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 language governing permissions and limitations under the License.
 */
 
-package auth
+package reflection
 
 import (
 	"log/slog"
@@ -23,9 +23,9 @@ import (
 	"github.com/innabox/fulfillment-cli/internal/logging"
 )
 
-func TestAuth(t *testing.T) {
+func TestReflection(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Auth")
+	RunSpecs(t, "Reflection")
 }
 
 var logger *slog.Logger
