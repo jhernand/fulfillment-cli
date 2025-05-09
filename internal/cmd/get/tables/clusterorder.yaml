@@ -17,6 +17,9 @@ columns:
 - header: ID
   value: id
 
+- header: DELETED
+  value: "has(metadata.deletion_timestamp)? string(metadata.deletion_timestamp): '-'"
+
 - header: TEMPLATE
   value: spec.template_id
 
