@@ -22,6 +22,7 @@ import (
 	"log/slog"
 	"os"
 	"path"
+	"slices"
 	"strings"
 	"text/tabwriter"
 
@@ -293,6 +294,15 @@ func (c *runnerContext) renderTable(objects []proto.Message) error {
 	}
 	if table == nil {
 		table = c.defaultTable()
+	}
+
+	// If the user has asked to include deleted objects then add the deletion timesgamp column:
+	if c.includeDeleted {
+		deletedCol := &Column{
+			Header: "DELETED",
+			Value:  "has(metadata.deletion_timestamp)? string(metadata.deletion_timestamp): '-'",
+		}
+		table.Columns = slices.Insert(table.Columns, 1, deletedCol)
 	}
 
 	// Compile the CEL programs:

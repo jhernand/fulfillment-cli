@@ -469,6 +469,13 @@ func (c *ObjectHelper) Update(ctx context.Context, object proto.Message) (result
 	return
 }
 
+func (c *ObjectHelper) Delete(ctx context.Context, id string) error {
+	request := proto.Clone(c.delete.request)
+	c.setId(request, c.delete.id, id)
+	response := proto.Clone(c.delete.response)
+	return c.parent.connection.Invoke(ctx, c.delete.path, request, response)
+}
+
 func (c *ObjectHelper) setId(message proto.Message, field protoreflect.FieldDescriptor, value string) {
 	message.ProtoReflect().Set(field, protoreflect.ValueOfString(value))
 }
