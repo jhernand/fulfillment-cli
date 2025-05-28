@@ -11,77 +11,82 @@ Unless required by applicable law or agreed to in writing, software distributed 
 language governing permissions and limitations under the License.
 */
 
-package cluster
+package password
 
 import (
 	"fmt"
-	"os"
-	"text/tabwriter"
+	"log/slog"
 
 	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
 
-	fulfillmentv1 "github.com/innabox/fulfillment-cli/internal/api/fulfillment/v1"
+	ffv1 "github.com/innabox/fulfillment-cli/internal/api/fulfillment/v1"
 	"github.com/innabox/fulfillment-cli/internal/config"
+	"github.com/innabox/fulfillment-cli/internal/logging"
 )
 
 func Cmd() *cobra.Command {
 	runner := &runnerContext{}
 	result := &cobra.Command{
-		Use:     "cluster [flags] ID",
-		Aliases: []string{"clusters"},
-		Short:   "Retrieve a cluster kubeconfig",
-		RunE:    runner.run,
+		Use:   "password [OPTION]...",
+		Short: "Get password",
+		RunE:  runner.run,
 	}
+	flags := result.Flags()
+	flags.StringVar(
+		&runner.cluster,
+		"cluster",
+		"",
+		"Identifier of the cluster. This is mandatory.",
+	)
 	return result
 }
 
 type runnerContext struct {
+	logger  *slog.Logger
+	cluster string
+	conn    *grpc.ClientConn
 }
 
 func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
-	// Check that there is exactly one cluster ID specified
-	if len(args) != 1 {
-		fmt.Fprintf(
-			os.Stderr,
-			"Expected exactly one cluster ID\n",
-		)
-		os.Exit(1)
-	}
-	clusterId := args[0]
+	var err error
 
 	// Get the context:
 	ctx := cmd.Context()
+
+	// Get the logger:
+	c.logger = logging.LoggerFromContext(ctx)
 
 	// Get the configuration:
 	cfg, err := config.Load()
 	if err != nil {
 		return err
 	}
-	if cfg.Address == "" {
+	if cfg == nil {
 		return fmt.Errorf("there is no configuration, run the 'login' command")
 	}
 
 	// Create the gRPC connection from the configuration:
-	conn, err := cfg.Connect(ctx)
+	c.conn, err = cfg.Connect(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to create gRPC connection: %w", err)
 	}
+	defer c.conn.Close()
 
-	// Create the client for the clusters service:
-	client := fulfillmentv1.NewClustersClient(conn)
-
-	// Get the kubeconfig:
-	response, err := client.GetKubeconfig(ctx, &fulfillmentv1.ClustersGetKubeconfigRequest{
-		Id: clusterId,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to describe order: %w", err)
+	// Check the flags:
+	if c.cluster == "" {
+		return fmt.Errorf("it is mandatory to specify the cluster identifier with the '--cluster' option")
 	}
 
-	// Display the orders:
-	writer := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintf(writer, "Kube Config:\t%s\n", response.Kubeconfig)
-	writer.Flush()
+	// Get the password:
+	client := ffv1.NewClustersClient(c.conn)
+	response, err := client.GetPassword(ctx, ffv1.ClustersGetPasswordRequest_builder{
+		Id: c.cluster,
+	}.Build())
+	if err != nil {
+		return err
+	}
+	fmt.Printf("%s\n", response.Password)
 
 	return nil
 }

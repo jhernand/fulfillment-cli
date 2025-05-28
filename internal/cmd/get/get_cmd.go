@@ -38,6 +38,8 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 	"gopkg.in/yaml.v3"
 
+	"github.com/innabox/fulfillment-cli/internal/cmd/get/kubeconfig"
+	"github.com/innabox/fulfillment-cli/internal/cmd/get/password"
 	"github.com/innabox/fulfillment-cli/internal/config"
 	"github.com/innabox/fulfillment-cli/internal/logging"
 	"github.com/innabox/fulfillment-cli/internal/reflection"
@@ -64,6 +66,8 @@ func Cmd() *cobra.Command {
 		Short: "Get objects",
 		RunE:  runner.run,
 	}
+	result.AddCommand(kubeconfig.Cmd())
+	result.AddCommand(password.Cmd())
 	flags := result.Flags()
 	flags.StringVarP(
 		&runner.format,
