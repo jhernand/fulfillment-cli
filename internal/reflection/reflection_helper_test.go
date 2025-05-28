@@ -353,5 +353,26 @@ var _ = Describe("Reflection helper", func() {
 				}.Build(),
 			)).To(BeTrue())
 		})
+
+		It("Invokes delete method", func() {
+			// Register a clusters server that responds to the delete request:
+			ffv1.RegisterClustersServer(server.Registrar(), &testing.ClustersServerFuncs{
+				DeleteFunc: func(ctx context.Context, request *ffv1.ClustersDeleteRequest,
+				) (response *ffv1.ClustersDeleteResponse, err error) {
+					defer GinkgoRecover()
+					response = ffv1.ClustersDeleteResponse_builder{}.Build()
+					return
+				},
+			})
+
+			// Start the server:
+			server.Start()
+
+			// Use the helper to send the request, and verify the response:
+			objectHelper := helper.Lookup("cluster")
+			Expect(objectHelper).ToNot(BeNil())
+			err := objectHelper.Delete(ctx, "123")
+			Expect(err).ToNot(HaveOccurred())
+		})
 	})
 })
