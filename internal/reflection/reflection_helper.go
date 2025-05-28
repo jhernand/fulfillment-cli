@@ -32,6 +32,7 @@ import (
 // Frequently used names:
 const (
 	// Methods:
+	createMethodName = protoreflect.Name("Create")
 	deleteMethodName = protoreflect.Name("Delete")
 	getMethodName    = protoreflect.Name("Get")
 	listMethodName   = protoreflect.Name("List")
@@ -145,6 +146,10 @@ func (h *Helper) scanService(serviceDesc protoreflect.ServiceDescriptor) {
 	if getDesc == nil {
 		return
 	}
+	createDesc := methodDescs.ByName(createMethodName)
+	if createDesc == nil {
+		return
+	}
 	updateDesc := methodDescs.ByName(updateMethodName)
 	if updateDesc == nil {
 		return
@@ -179,6 +184,22 @@ func (h *Helper) scanService(serviceDesc protoreflect.ServiceDescriptor) {
 		return
 	}
 
+	// The request and response of the `Crate` method must have an `object` message field:
+	createRequestObjectFieldDesc := h.getObjectField(createDesc.Input())
+	if createRequestObjectFieldDesc == nil {
+		return
+	}
+	if createRequestObjectFieldDesc.Message() != objectDesc {
+		return
+	}
+	createResponseObjectFieldDesc := h.getObjectField(createDesc.Output())
+	if createResponseObjectFieldDesc == nil {
+		return
+	}
+	if createResponseObjectFieldDesc.Message() != objectDesc {
+		return
+	}
+
 	// The request and response of the `Update` method must have an `object` message field:
 	updateRequestObjectFieldDesc := h.getObjectField(updateDesc.Input())
 	if updateRequestObjectFieldDesc == nil {
@@ -207,13 +228,21 @@ func (h *Helper) scanService(serviceDesc protoreflect.ServiceDescriptor) {
 	// Create templates for the request and response messages:
 	getRequestTemplate, getResponseTemplate := h.makeMethodTemplates(getDesc)
 	listRequestTemplate, listResponseTemplate := h.makeMethodTemplates(listDesc)
+	createRequestTemplate, createResponseTemplate := h.makeMethodTemplates(createDesc)
 	updateRequestTemplate, updateResponseTemplate := h.makeMethodTemplates(updateDesc)
 	deleteRequestTemplate, deleteResponseTemplate := h.makeMethodTemplates(deleteDesc)
+
+	// Calculate the singular and pluran names:
+	objectName := string(objectDesc.Name())
+	objectNameSingular := strings.ToLower(objectName)
+	objectNamePlural := strings.ToLower(h.pluralizer.Plural(objectName))
 
 	// This is a supported object type:
 	helper := ObjectHelper{
 		parent:     h,
 		descriptor: objectDesc,
+		singular:   objectNameSingular,
+		plural:     objectNamePlural,
 		template:   objectTemplate,
 		get: getInfo{
 			methodInfo: methodInfo{
@@ -232,6 +261,15 @@ func (h *Helper) scanService(serviceDesc protoreflect.ServiceDescriptor) {
 			},
 			filter: listRequestFilterFieldDesc,
 			items:  listResponseItemsFieldDesc,
+		},
+		create: createInfo{
+			methodInfo: methodInfo{
+				path:     h.makeMethodPath(createDesc),
+				request:  createRequestTemplate,
+				response: createResponseTemplate,
+			},
+			in:  createRequestObjectFieldDesc,
+			out: createResponseObjectFieldDesc,
 		},
 		update: updateInfo{
 			methodInfo: methodInfo{
@@ -315,34 +353,35 @@ func (h *Helper) Singulars() []string {
 	h.scanIfNeeded()
 	results := make([]string, len(h.helpers))
 	for i, objectInfo := range h.helpers {
-		results[i] = strings.ToLower(string(objectInfo.descriptor.Name()))
+		results[i] = objectInfo.singular
 	}
 	sort.Strings(results)
 	return results
 }
 
 // Plurals the object types in plural. The reusults are in lower case an sorted alphabetically.
-func (a *Helper) Plurals() []string {
-	a.scanIfNeeded()
-	results := make([]string, len(a.helpers))
-	for i, objectInfo := range a.helpers {
-		results[i] = a.pluralizer.Plural(strings.ToLower(string(objectInfo.descriptor.Name())))
+func (h *Helper) Plurals() []string {
+	h.scanIfNeeded()
+	results := make([]string, len(h.helpers))
+	for i, objectInfo := range h.helpers {
+		results[i] = objectInfo.plural
 	}
 	sort.Strings(results)
 	return results
 }
 
 // Lookup returns the helper for the given object type. Returns nil if there is no such object.
-func (a *Helper) Lookup(objectType string) *ObjectHelper {
-	a.scanIfNeeded()
-	for i, objectInfo := range a.helpers {
-		singular := strings.ToLower(string(objectInfo.descriptor.Name()))
-		if strings.EqualFold(objectType, singular) {
-			return &a.helpers[i]
+func (h *Helper) Lookup(objectType string) *ObjectHelper {
+	h.scanIfNeeded()
+	for i, objectInfo := range h.helpers {
+		if objectType == string(objectInfo.descriptor.FullName()) {
+			return &h.helpers[i]
 		}
-		plural := a.pluralizer.Plural(singular)
-		if strings.EqualFold(objectType, plural) {
-			return &a.helpers[i]
+		if strings.EqualFold(objectType, objectInfo.singular) {
+			return &h.helpers[i]
+		}
+		if strings.EqualFold(objectType, objectInfo.plural) {
+			return &h.helpers[i]
 		}
 	}
 	return nil
@@ -371,9 +410,12 @@ func (h *Helper) makeTemplate(messageDesc protoreflect.MessageDescriptor) proto.
 type ObjectHelper struct {
 	parent     *Helper
 	descriptor protoreflect.MessageDescriptor
+	singular   string
+	plural     string
 	template   proto.Message
 	list       listInfo
 	get        getInfo
+	create     createInfo
 	update     updateInfo
 	delete     deleteInfo
 }
@@ -394,6 +436,12 @@ type listInfo struct {
 	methodInfo
 	filter protoreflect.FieldDescriptor
 	items  protoreflect.FieldDescriptor
+}
+
+type createInfo struct {
+	methodInfo
+	in  protoreflect.FieldDescriptor
+	out protoreflect.FieldDescriptor
 }
 
 type updateInfo struct {
@@ -421,6 +469,14 @@ func (h *ObjectHelper) FullName() protoreflect.FullName {
 
 func (h *ObjectHelper) String() string {
 	return string(h.descriptor.FullName())
+}
+
+func (h *ObjectHelper) Singular() string {
+	return h.singular
+}
+
+func (h *ObjectHelper) Plural() string {
+	return h.plural
 }
 
 type ListOptions struct {
@@ -454,6 +510,18 @@ func (c *ObjectHelper) Get(ctx context.Context, id string) (result proto.Message
 		return
 	}
 	result = c.getObject(response, c.get.object)
+	return
+}
+
+func (c *ObjectHelper) Create(ctx context.Context, object proto.Message) (result proto.Message, err error) {
+	request := proto.Clone(c.create.request)
+	c.setObject(request, c.create.in, object)
+	response := proto.Clone(c.create.response)
+	err = c.parent.connection.Invoke(ctx, c.create.path, request, response)
+	if err != nil {
+		err = fmt.Errorf("failed to create object: %w", err)
+	}
+	result = c.getObject(response, c.create.out)
 	return
 }
 

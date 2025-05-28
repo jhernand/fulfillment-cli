@@ -285,6 +285,75 @@ var _ = Describe("Reflection helper", func() {
 			)).To(BeTrue())
 		})
 
+		It("Invokes create method", func() {
+			// Register a clusters server that responds to the create request:
+			ffv1.RegisterClustersServer(server.Registrar(), &testing.ClustersServerFuncs{
+				CreateFunc: func(ctx context.Context, request *ffv1.ClustersCreateRequest,
+				) (response *ffv1.ClustersCreateResponse, err error) {
+					defer GinkgoRecover()
+					Expect(proto.Equal(
+						request.Object,
+						ffv1.Cluster_builder{
+							Spec: ffv1.ClusterSpec_builder{
+								NodeSets: map[string]*ffv1.ClusterNodeSet{
+									"xyz": ffv1.ClusterNodeSet_builder{
+										HostClass: "acme_1tib",
+										Size:      3,
+									}.Build(),
+								},
+							}.Build(),
+						}.Build(),
+					)).To(BeTrue())
+					response = ffv1.ClustersCreateResponse_builder{
+						Object: ffv1.Cluster_builder{
+							Id: "123",
+							Spec: ffv1.ClusterSpec_builder{
+								NodeSets: map[string]*ffv1.ClusterNodeSet{
+									"xyz": ffv1.ClusterNodeSet_builder{
+										HostClass: "acme_1tib",
+										Size:      3,
+									}.Build(),
+								},
+							}.Build(),
+						}.Build(),
+					}.Build()
+					return
+				},
+			})
+
+			// Start the server:
+			server.Start()
+
+			// Use the helper to send the request, and verify the response:
+			objectHelper := helper.Lookup("cluster")
+			Expect(objectHelper).ToNot(BeNil())
+			object, err := objectHelper.Create(ctx, ffv1.Cluster_builder{
+				Spec: ffv1.ClusterSpec_builder{
+					NodeSets: map[string]*ffv1.ClusterNodeSet{
+						"xyz": ffv1.ClusterNodeSet_builder{
+							HostClass: "acme_1tib",
+							Size:      3,
+						}.Build(),
+					},
+				}.Build(),
+			}.Build())
+			Expect(err).ToNot(HaveOccurred())
+			Expect(proto.Equal(
+				object,
+				ffv1.Cluster_builder{
+					Id: "123",
+					Spec: ffv1.ClusterSpec_builder{
+						NodeSets: map[string]*ffv1.ClusterNodeSet{
+							"xyz": ffv1.ClusterNodeSet_builder{
+								HostClass: "acme_1tib",
+								Size:      3,
+							}.Build(),
+						},
+					}.Build(),
+				}.Build(),
+			)).To(BeTrue())
+		})
+
 		It("Invokes update method", func() {
 			// Register a clusters server that responds to the update request:
 			ffv1.RegisterClustersServer(server.Registrar(), &testing.ClustersServerFuncs{
