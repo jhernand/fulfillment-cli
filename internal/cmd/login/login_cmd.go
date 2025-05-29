@@ -15,6 +15,7 @@ package login
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/innabox/fulfillment-cli/internal/config"
 	"github.com/spf13/cobra"
@@ -31,13 +32,13 @@ func Cmd() *cobra.Command {
 	flags.StringVar(
 		&runner.token,
 		"token",
-		"",
+		os.Getenv("FULFILLMENT_SERVICE_TOKEN"),
 		"Authentication token",
 	)
 	flags.StringVar(
 		&runner.tokenScript,
 		"token-script",
-		"",
+		os.Getenv("FULFILLMENT_SERVICE_TOKEN_SCRIPT"),
 		"Shell command that will be executed to obtain the token. For example, to automatically get the "+
 			"token of the Kubernetes 'client' service account of the 'example' namespace the value "+
 			"could be 'kubectl create token -n example client --duration 1h'. Note that is important "+
@@ -59,7 +60,7 @@ func Cmd() *cobra.Command {
 	flags.StringVar(
 		&runner.address,
 		"address",
-		"",
+		os.Getenv("FULFILLMENT_SERVICE_ADDRESS"),
 		"Server address",
 	)
 	return result
