@@ -63,6 +63,13 @@ func Cmd() *cobra.Command {
 		os.Getenv("FULFILLMENT_SERVICE_ADDRESS"),
 		"Server address",
 	)
+	flags.BoolVar(
+		&runner.private,
+		"private",
+		false,
+		"Enables use of the private API.",
+	)
+	flags.MarkHidden("private")
 	return result
 }
 
@@ -72,6 +79,7 @@ type runnerContext struct {
 	plaintext   bool
 	insecure    bool
 	address     string
+	private     bool
 }
 
 func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
@@ -95,6 +103,7 @@ func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
 	cfg.Plaintext = c.plaintext
 	cfg.Insecure = c.insecure
 	cfg.Address = c.address
+	cfg.Private = c.private
 
 	// Save the configuration:
 	err = config.Save(cfg)

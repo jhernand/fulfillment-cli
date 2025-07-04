@@ -11,7 +11,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 language governing permissions and limitations under the License.
 */
 
-package clusterorder
+package cluster
 
 import (
 	"fmt"
@@ -21,16 +21,16 @@ import (
 
 	"github.com/spf13/cobra"
 
-	fulfillmentv1 "github.com/innabox/fulfillment-cli/internal/api/fulfillment/v1"
+	ffv1 "github.com/innabox/fulfillment-cli/internal/api/fulfillment/v1"
 	"github.com/innabox/fulfillment-cli/internal/config"
 )
 
 func Cmd() *cobra.Command {
 	runner := &runnerContext{}
 	result := &cobra.Command{
-		Use:     "clusterorder [flags] ID",
-		Aliases: []string{"clusterorders"},
-		Short:   "Describe a cluster order",
+		Use:     "cluster [flags] ID",
+		Aliases: []string{"clusters"},
+		Short:   "Describe a cluster",
 		RunE:    runner.run,
 	}
 	return result
@@ -40,15 +40,15 @@ type runnerContext struct {
 }
 
 func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
-	// Check that there is exactly one cluster order ID specified
+	// Check that there is exactly one cluster ID specified
 	if len(args) != 1 {
 		fmt.Fprintf(
 			os.Stderr,
-			"Expected exactly one cluster order ID\n",
+			"Expected exactly one cluster ID\n",
 		)
 		os.Exit(1)
 	}
-	orderId := args[0]
+	id := args[0]
 
 	// Get the context:
 	ctx := cmd.Context()
@@ -69,30 +69,30 @@ func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Create the client for the cluster orders service:
-	client := fulfillmentv1.NewClusterOrdersClient(conn)
+	client := ffv1.NewClustersClient(conn)
 
 	// Get the order:
-	response, err := client.Get(ctx, &fulfillmentv1.ClusterOrdersGetRequest{
-		Id: orderId,
-	})
+	response, err := client.Get(ctx, ffv1.ClustersGetRequest_builder{
+		Id: id,
+	}.Build())
 	if err != nil {
 		return fmt.Errorf("failed to describe order: %w", err)
 	}
 
-	// Display the orders:
+	// Display the clusters:
 	writer := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	order := response.Object
-	templateId := "-"
-	if order.Spec != nil {
-		templateId = order.Spec.TemplateId
+	cluster := response.Object
+	template := "-"
+	if cluster.Spec != nil {
+		template = cluster.Spec.Template
 	}
 	state := "-"
-	if order.Status != nil {
-		state = order.Status.State.String()
+	if cluster.Status != nil {
+		state = cluster.Status.State.String()
 		state = strings.Replace(state, "CLUSTER_ORDER_STATE_", "", -1)
 	}
-	fmt.Fprintf(writer, "ID:\t%s\n", order.Id)
-	fmt.Fprintf(writer, "Template:\t%s\n", templateId)
+	fmt.Fprintf(writer, "ID:\t%s\n", cluster.Id)
+	fmt.Fprintf(writer, "Template:\t%s\n", template)
 	fmt.Fprintf(writer, "State:\t%s\n", state)
 	writer.Flush()
 

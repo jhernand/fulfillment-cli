@@ -19,9 +19,6 @@ import (
 
 // Table describes how to render protocol buffers messages in tabular form.
 type Table struct {
-	// FullName is the full name of the type message type, for example `fulfillment.v1.ClusterOrder`.
-	FullName protoreflect.FullName `yaml:"full_name,omitempty"`
-
 	// Columns describes how fields of the message are mapped to columns.
 	Columns []*Column `yaml:"columns,omitempty"`
 }
@@ -31,6 +28,8 @@ type Column struct {
 	// Header is the text of the header for the colum. The default is to use the name of the field in upper case
 	// and replacing underscores with spaces.
 	Header string `yaml:"header,omitempty"`
+
+	Width int `yaml:"width,omitempty"`
 
 	// Value is a CEL expression that will be used to calculate the rendered value. The expression can access
 	// the message via the `message` built-in variable.

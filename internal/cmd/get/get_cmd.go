@@ -14,11 +14,11 @@ language governing permissions and limitations under the License.
 package get
 
 import (
-	"bytes"
 	"context"
 	"embed"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"path"
@@ -44,7 +44,12 @@ import (
 	"github.com/innabox/fulfillment-cli/internal/config"
 	"github.com/innabox/fulfillment-cli/internal/logging"
 	"github.com/innabox/fulfillment-cli/internal/reflection"
+	"github.com/innabox/fulfillment-cli/internal/templating"
+	"github.com/innabox/fulfillment-cli/internal/terminal"
 )
+
+//go:embed templates
+var templatesFS embed.FS
 
 //go:embed tables
 var tablesFS embed.FS
@@ -97,6 +102,8 @@ func Cmd() *cobra.Command {
 
 type runnerContext struct {
 	logger         *slog.Logger
+	engine         *templating.Engine
+	console        *terminal.Console
 	format         string
 	filter         string
 	includeDeleted bool
@@ -111,8 +118,9 @@ func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
 	// Get the context:
 	ctx := cmd.Context()
 
-	// Get the logger:
+	// Get the logger and console:
 	c.logger = logging.LoggerFromContext(ctx)
+	c.console = terminal.ConsoleFromContext(ctx)
 
 	// Get the configuration:
 	cfg, err := config.Load()
@@ -134,41 +142,39 @@ func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
 	helper, err := reflection.NewHelper().
 		SetLogger(c.logger).
 		SetConnection(c.conn).
+		AddPackages(cfg.Packages()...).
 		Build()
 	if err != nil {
 		return fmt.Errorf("failed to create reflection tool: %w", err)
 	}
 
+	// Create the templating engine:
+	c.engine, err = templating.NewEngine().
+		SetLogger(c.logger).
+		SetFS(templatesFS).
+		SetDir("templates").
+		Build()
+	if err != nil {
+		return fmt.Errorf("failed to create templating engine: %w", err)
+	}
+
 	// Check that the object type has been specified:
 	if len(args) == 0 {
-		plurals := helper.Plurals()
-		fmt.Printf("You must specify the type of object to get.\n")
-		fmt.Printf("\n")
-		fmt.Printf("The following object types are available:\n")
-		fmt.Printf("\n")
-		for _, plural := range plurals {
-			fmt.Printf("- %s\n", plural)
-		}
-		fmt.Printf("\n")
-		fmt.Printf("For example, to get the list of cluster templates:\n")
-		fmt.Printf("\n")
-		fmt.Printf("%s get clustertemplates\n", os.Args[0])
-		fmt.Printf("\n")
-		fmt.Printf("Use the '--help' option to get more details about the command.\n")
+		c.console.Render(ctx, c.engine, "no_object.txt", map[string]any{
+			"Helper": helper,
+			"Binary": os.Args[0],
+		})
 		return nil
 	}
 
 	// Get the object helper:
 	c.helper = helper.Lookup(args[0])
 	if c.helper == nil {
-		plurals := helper.Plurals()
-		fmt.Printf("There is no object type named '%s'.\n", args[0])
-		fmt.Printf("\n")
-		fmt.Printf("The following object types are available:\n")
-		fmt.Printf("\n")
-		for _, plural := range plurals {
-			fmt.Printf("- %s\n", plural)
-		}
+		c.console.Render(ctx, c.engine, "wrong_object.txt", map[string]any{
+			"Helper": helper,
+			"Binary": os.Args[0],
+			"Object": args[0],
+		})
 		return nil
 	}
 
@@ -194,7 +200,7 @@ func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Render the items:
-	var render func([]proto.Message) error
+	var render func(context.Context, []proto.Message) error
 	switch c.format {
 	case outputFormatJson:
 		render = c.renderJson
@@ -203,7 +209,7 @@ func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
 	default:
 		render = c.renderTable
 	}
-	return render(objects)
+	return render(ctx, objects)
 }
 
 func (c *runnerContext) get(ctx context.Context, ids []string) (results []proto.Message, err error) {
@@ -235,29 +241,8 @@ func (c *runnerContext) list(ctx context.Context) (results []proto.Message, err 
 	return
 }
 
-func (c *runnerContext) findTable() (result *Table, err error) {
-	entries, err := tablesFS.ReadDir("tables")
-	if err != nil {
-		err = fmt.Errorf("failed to lookup table metadata for object type '%s': %w", c.helper.FullName(), err)
-		return
-	}
-	for _, entry := range entries {
-		if entry.Type().IsRegular() && strings.HasSuffix(entry.Name(), ".yaml") {
-			var table *Table
-			table, err = c.loadTable(entry.Name())
-			if err != nil {
-				return
-			}
-			if table.FullName == c.helper.FullName() {
-				result = table
-				return
-			}
-		}
-	}
-	return
-}
-
-func (c *runnerContext) loadTable(file string) (result *Table, err error) {
+func (c *runnerContext) loadTable() (result *Table, err error) {
+	file := fmt.Sprintf("%s.yaml", c.helper.FullName())
 	data, err := tablesFS.ReadFile(path.Join("tables", file))
 	if err != nil {
 		err = fmt.Errorf(
@@ -290,9 +275,15 @@ func (c *runnerContext) defaultTable() *Table {
 	}
 }
 
-func (c *runnerContext) renderTable(objects []proto.Message) error {
-	// Try to find a table that matches the object type:
-	table, err := c.findTable()
+func (c *runnerContext) renderTable(ctx context.Context, objects []proto.Message) error {
+	// Check if there are results:
+	if len(objects) == 0 {
+		c.console.Render(ctx, c.engine, "no_matching_objects.txt", nil)
+		return nil
+	}
+
+	// Try to load the table that matches the object type:
+	table, err := c.loadTable()
 	if err != nil {
 		return err
 	}
@@ -339,93 +330,90 @@ func (c *runnerContext) renderTable(objects []proto.Message) error {
 
 	// Render the table:
 	writer := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintf(writer, "%s\n", c.renderTableHeader(table.Columns))
+	c.renderTableHeader(writer, table.Columns)
 	for _, object := range objects {
-		row, err := c.renderTableRow(table.Columns, prgs, object)
+		err := c.renderTableRow(writer, table.Columns, prgs, object)
 		if err != nil {
 			return err
 		}
-		writer.Write([]byte(row))
 	}
 	writer.Flush()
+
 	return nil
 }
 
-func (c *runnerContext) renderTableHeader(cols []*Column) string {
-	headers := make([]string, len(cols))
+func (c *runnerContext) renderTableHeader(writer io.Writer, cols []*Column) error {
 	for i, col := range cols {
-		headers[i] = col.Header
+		if i > 0 {
+			fmt.Fprint(writer, "\t")
+		}
+		fmt.Fprintf(writer, "%s", col.Header)
 	}
-	return strings.Join(headers, "\t")
+	fmt.Fprintf(writer, "\n")
+	return nil
 }
 
-func (c *runnerContext) renderTableRow(cols []*Column, prgs []cel.Program, object proto.Message) (result string,
-	err error) {
+func (c *runnerContext) renderTableRow(writer io.Writer, cols []*Column, prgs []cel.Program,
+	object proto.Message) error {
 	in, err := cel.ContextProtoVars(object)
 	if err != nil {
-		err = fmt.Errorf(
+		return fmt.Errorf(
 			"failed to set variables for CEL expression for type '%s': %w",
 			c.helper, err,
 		)
 	}
-	buffer := &bytes.Buffer{}
 	for i := range len(cols) {
+		if i > 0 {
+			fmt.Fprintf(writer, "\t")
+		}
+		if err != nil {
+			return err
+		}
 		col := cols[i]
 		prg := prgs[i]
 		var out ref.Val
 		out, _, err = prg.Eval(in)
 		if err != nil {
-			err = fmt.Errorf(
+			return fmt.Errorf(
 				"failed to evaluate CEL expression '%s' for column '%s' of type '%s': %w",
 				col.Value, col.Header, c.helper, err,
 			)
-			return
 		}
-		var txt string
-		txt, err = c.renderTableCell(col, out)
+		err = c.renderTableCell(writer, col, out)
 		if err != nil {
-			err = fmt.Errorf(
+			return fmt.Errorf(
 				"failed to render value '%s' for column '%s' of type '%s': %w",
 				out, col.Header, c.helper, err,
 			)
-			return
-		}
-		buffer.WriteString(txt)
-		if i < len(cols)-1 {
-			buffer.WriteRune('\t')
-		} else {
-			buffer.WriteRune('\n')
 		}
 	}
-	result = buffer.String()
-	return
+	fmt.Fprintf(writer, "\n")
+	return nil
 }
 
-func (c *runnerContext) renderTableCell(col *Column, val ref.Val) (result string, err error) {
+func (c *runnerContext) renderTableCell(writer io.Writer, col *Column, val ref.Val) error {
 	switch val := val.(type) {
 	case types.Int:
 		if col.Type != "" {
 			enumType, _ := protoregistry.GlobalTypes.FindEnumByName(col.Type)
 			if enumType != nil {
-				result, err = c.renderTableCellEnumType(val, enumType.Descriptor())
+				return c.renderTableCellEnumType(writer, val, enumType.Descriptor())
 			}
-		} else {
-			result, err = c.renderTableCellAnyType(val)
 		}
-	default:
-		result, err = c.renderTableCellAnyType(val)
 	}
-	return
+	return c.renderTableCellAnyType(writer, val)
 }
 
-func (c *runnerContext) renderTableCellEnumType(val types.Int, enumDesc protoreflect.EnumDescriptor) (result string,
-	err error) {
+func (c *runnerContext) renderTableCellEnumType(writer io.Writer, val types.Int,
+	enumDesc protoreflect.EnumDescriptor) error {
 	// Get the text of the name of the enum value:
 	valueDescs := enumDesc.Values()
 	valueDesc := valueDescs.ByNumber(protoreflect.EnumNumber(val))
 	if valueDesc == nil {
-		result = fmt.Sprintf("UNKNOWN:%d", val)
-		return
+		_, err := fmt.Fprintf(writer, "UNKNOWN:%d", val)
+		if err != nil {
+			return err
+		}
 	}
 	valueTxt := string(valueDesc.Name())
 
@@ -443,16 +431,16 @@ func (c *runnerContext) renderTableCellEnumType(val types.Int, enumDesc protoref
 		}
 	}
 
-	result = valueTxt
-	return
+	_, err := fmt.Fprintf(writer, "%s", valueTxt)
+	return err
 }
 
-func (c *runnerContext) renderTableCellAnyType(val ref.Val) (result string, err error) {
-	result = fmt.Sprintf("%s", val)
-	return
+func (c *runnerContext) renderTableCellAnyType(writer io.Writer, val ref.Val) error {
+	_, err := fmt.Fprintf(writer, "%s", val)
+	return err
 }
 
-func (c *runnerContext) renderJson(objects []proto.Message) error {
+func (c *runnerContext) renderJson(ctx context.Context, objects []proto.Message) error {
 	values, err := c.encodeObjects(objects)
 	if err != nil {
 		return err
@@ -465,7 +453,7 @@ func (c *runnerContext) renderJson(objects []proto.Message) error {
 	return encoder.Encode(values)
 }
 
-func (c *runnerContext) renderYaml(objects []proto.Message) error {
+func (c *runnerContext) renderYaml(ctx context.Context, objects []proto.Message) error {
 	values, err := c.encodeObjects(objects)
 	if err != nil {
 		return err

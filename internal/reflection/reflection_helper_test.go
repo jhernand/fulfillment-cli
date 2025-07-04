@@ -59,6 +59,28 @@ var _ = Describe("Reflection helper", func() {
 			helper, err := NewHelper().
 				SetLogger(logger).
 				SetConnection(connection).
+				AddPackage("fulfillment.v1").
+				Build()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(helper).ToNot(BeNil())
+		})
+
+		It("Can be created with multiple packages", func() {
+			helper, err := NewHelper().
+				SetLogger(logger).
+				SetConnection(connection).
+				AddPackage("fulfillment.v1").
+				AddPackage("private.v1").
+				Build()
+			Expect(err).ToNot(HaveOccurred())
+			Expect(helper).ToNot(BeNil())
+		})
+
+		It("Can be created with multiple specified in one call", func() {
+			helper, err := NewHelper().
+				SetLogger(logger).
+				SetConnection(connection).
+				AddPackages("fulfillment.v1", "private.v1").
 				Build()
 			Expect(err).ToNot(HaveOccurred())
 			Expect(helper).ToNot(BeNil())
@@ -67,6 +89,7 @@ var _ = Describe("Reflection helper", func() {
 		It("Can't be created without a logger", func() {
 			helper, err := NewHelper().
 				SetConnection(connection).
+				AddPackage("fulfillment.v1").
 				Build()
 			Expect(err).To(MatchError("logger is mandatory"))
 			Expect(helper).To(BeNil())
@@ -75,8 +98,18 @@ var _ = Describe("Reflection helper", func() {
 		It("Can't be created without a connection", func() {
 			helper, err := NewHelper().
 				SetLogger(logger).
+				AddPackage("fulfillment.v1").
 				Build()
 			Expect(err).To(MatchError("gRPC connection is mandatory"))
+			Expect(helper).To(BeNil())
+		})
+
+		It("Can't be created without at least one package", func() {
+			helper, err := NewHelper().
+				SetLogger(logger).
+				SetConnection(connection).
+				Build()
+			Expect(err).To(MatchError("at least one package is mandatory"))
 			Expect(helper).To(BeNil())
 		})
 	})
@@ -89,6 +122,7 @@ var _ = Describe("Reflection helper", func() {
 			helper, err = NewHelper().
 				SetLogger(logger).
 				SetConnection(connection).
+				AddPackage("fulfillment.v1").
 				Build()
 			Expect(err).ToNot(HaveOccurred())
 		})
@@ -96,7 +130,6 @@ var _ = Describe("Reflection helper", func() {
 		It("Returns object types in singular", func() {
 			Expect(helper.Singulars()).To(ConsistOf(
 				"cluster",
-				"clusterorder",
 				"clustertemplate",
 				"hostclass",
 			))
@@ -105,7 +138,6 @@ var _ = Describe("Reflection helper", func() {
 		It("Returns object types in plural", func() {
 			Expect(helper.Plurals()).To(ConsistOf(
 				"clusters",
-				"clusterorders",
 				"clustertemplates",
 				"hostclasses",
 			))
@@ -134,11 +166,6 @@ var _ = Describe("Reflection helper", func() {
 				"fulfillment.v1.Cluster",
 			),
 			Entry(
-				"Cluster order in plural camel case",
-				"ClusterOrders",
-				"fulfillment.v1.ClusterOrder",
-			),
-			Entry(
 				"Host class in plural",
 				"hostclasses",
 				"fulfillment.v1.HostClass",
@@ -165,11 +192,6 @@ var _ = Describe("Reflection helper", func() {
 				"fulfillment.v1.ClusterTemplate",
 			),
 			Entry(
-				"Cluster order",
-				"clusterorder",
-				"fulfillment.v1.ClusterOrder",
-			),
-			Entry(
 				"Host class",
 				"hostclass",
 				"fulfillment.v1.HostClass",
@@ -193,11 +215,6 @@ var _ = Describe("Reflection helper", func() {
 				"Cluster template",
 				"clustertemplate",
 				&ffv1.ClusterTemplate{},
-			),
-			Entry(
-				"Cluster order",
-				"clusterorder",
-				&ffv1.ClusterOrder{},
 			),
 			Entry(
 				"Host class",

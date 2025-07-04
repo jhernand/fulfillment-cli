@@ -11,18 +11,13 @@
 # specific language governing permissions and limitations under the License.
 #
 
-full_name: fulfillment.v1.Cluster
 columns:
 
 - header: ID
   value: id
 
-- header: STATE
-  value: status.state
-  type: fulfillment.v1.ClusterState
+- header: TITLE
+  value: title
 
-- header: API URL
-  value: "has(status.api_url)? status.api_url: '-'"
-
-- header: CONSOLE URL
-  value: "has(status.console_url)? status.console_url: '-'"
+- header: DESCRIPTION
+  value: description

@@ -11,18 +11,13 @@
 # specific language governing permissions and limitations under the License.
 #
 
-full_name: fulfillment.v1.ClusterOrder
 columns:
 
 - header: ID
   value: id
 
-- header: TEMPLATE
-  value: spec.template_id
+- header: TITLE
+  value: title
 
-- header: STATE
-  value: status.state
-  type: fulfillment.v1.ClusterOrderState
-
-- header: CLUSTER
-  value: status.cluster_id
+- header: DESCRIPTION
+  value: description

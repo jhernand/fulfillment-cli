@@ -16,8 +16,8 @@ package edit
 import (
 	"bytes"
 	"context"
+	"embed"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -33,7 +33,12 @@ import (
 	"github.com/innabox/fulfillment-cli/internal/config"
 	"github.com/innabox/fulfillment-cli/internal/logging"
 	"github.com/innabox/fulfillment-cli/internal/reflection"
+	"github.com/innabox/fulfillment-cli/internal/templating"
+	"github.com/innabox/fulfillment-cli/internal/terminal"
 )
+
+//go:embed templates
+var templatesFS embed.FS
 
 // Possible output formats:
 const (
@@ -68,6 +73,8 @@ func Cmd() *cobra.Command {
 
 type runnerContext struct {
 	logger         *slog.Logger
+	engine         *templating.Engine
+	console        *terminal.Console
 	format         string
 	conn           *grpc.ClientConn
 	marshalOptions protojson.MarshalOptions
@@ -80,8 +87,9 @@ func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
 	// Get the context:
 	ctx := cmd.Context()
 
-	// Get the logger:
+	// Get the logger and the console:
 	c.logger = logging.LoggerFromContext(ctx)
+	c.console = terminal.ConsoleFromContext(ctx)
 
 	// Get the configuration:
 	cfg, err := config.Load()
@@ -103,41 +111,39 @@ func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
 	helper, err := reflection.NewHelper().
 		SetLogger(c.logger).
 		SetConnection(c.conn).
+		AddPackages(cfg.Packages()...).
 		Build()
 	if err != nil {
 		return fmt.Errorf("failed to create reflection tool: %w", err)
 	}
 
+	// Create the templating engine:
+	c.engine, err = templating.NewEngine().
+		SetLogger(c.logger).
+		SetFS(templatesFS).
+		SetDir("templates").
+		Build()
+	if err != nil {
+		return fmt.Errorf("failed to create templating engine: %w", err)
+	}
+
 	// Check that the object type has been specified:
 	if len(args) == 0 {
-		singulars := helper.Singulars()
-		fmt.Printf("You must specify the type of object to edit.\n")
-		fmt.Printf("\n")
-		fmt.Printf("The following object types are available:\n")
-		fmt.Printf("\n")
-		for _, singular := range singulars {
-			fmt.Printf("- %s\n", singular)
-		}
-		fmt.Printf("\n")
-		fmt.Printf("For example, to edit cluster order with identifier '123':\n")
-		fmt.Printf("\n")
-		fmt.Printf("%s edit clusterorder 123\n", os.Args[0])
-		fmt.Printf("\n")
-		fmt.Printf("Use the '--help' option to get more details about the command.\n")
+		c.console.Render(ctx, c.engine, "no_object.txt", map[string]any{
+			"Helper": helper,
+			"Binary": os.Args[0],
+		})
 		return nil
 	}
 
 	// Get the information about the object type:
 	c.helper = helper.Lookup(args[0])
 	if c.helper == nil {
-		singulars := helper.Singulars()
-		fmt.Printf("There is no object type named '%s'.\n", args[0])
-		fmt.Printf("\n")
-		fmt.Printf("The following object types are available:\n")
-		fmt.Printf("\n")
-		for _, singular := range singulars {
-			fmt.Printf("- %s\n", singular)
-		}
+		c.console.Render(ctx, c.engine, "wrong_object.txt", map[string]any{
+			"Helper": helper,
+			"Binary": os.Args[0],
+			"Object": args[0],
+		})
 		return nil
 	}
 
@@ -151,7 +157,10 @@ func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
 
 	// Check that the object identifier has been specified:
 	if len(args) < 2 {
-		return errors.New("object identifier is mandatory")
+		c.console.Render(ctx, c.engine, "no_id.txt", map[string]any{
+			"Binary": os.Args[0],
+		})
+		return nil
 	}
 	objectId := args[1]
 
@@ -165,7 +174,7 @@ func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
 	// Get the current representation of the object:
 	object, err := c.get(ctx, objectId)
 	if err != nil {
-		return fmt.Errorf("failed to get of type '%s' with identifier '%s': %w", c.helper, objectId, err)
+		return fmt.Errorf("failed to get object of type '%s' with identifier '%s': %w", c.helper, objectId, err)
 	}
 
 	// Render the object:

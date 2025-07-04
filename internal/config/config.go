@@ -23,6 +23,7 @@ import (
 
 	"github.com/innabox/fulfillment-cli/internal/auth"
 	"github.com/innabox/fulfillment-cli/internal/logging"
+	"github.com/innabox/fulfillment-cli/internal/packages"
 	"golang.org/x/oauth2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -39,6 +40,7 @@ type Config struct {
 	Plaintext   bool   `json:"plaintext,omitempty"`
 	Insecure    bool   `json:"insecure,omitempty"`
 	Address     string `json:"address,omitempty"`
+	Private     bool   `json:"packages,omitempty"`
 }
 
 // Load loads the configuration from the configuration file.
@@ -172,4 +174,13 @@ func (c *Config) Connect(ctx context.Context) (result *grpc.ClientConn, err erro
 
 	result, err = grpc.NewClient(c.Address, dialOpts...)
 	return
+}
+
+// Packages returns the list of packages that should be enabled according to the configuration. The public packages
+// will always be enabled, but the private packages will be enabled only if the `private` flag is true.
+func (c *Config) Packages() []string {
+	if c.Private {
+		return packages.All
+	}
+	return packages.Public
 }

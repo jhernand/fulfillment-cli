@@ -28,7 +28,8 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 	"gopkg.in/yaml.v3"
 
-	"github.com/innabox/fulfillment-cli/internal/cmd/create/clusterorder"
+	"github.com/innabox/fulfillment-cli/internal/cmd/create/cluster"
+	"github.com/innabox/fulfillment-cli/internal/cmd/create/hub"
 	"github.com/innabox/fulfillment-cli/internal/config"
 	"github.com/innabox/fulfillment-cli/internal/logging"
 	"github.com/innabox/fulfillment-cli/internal/reflection"
@@ -41,7 +42,8 @@ func Cmd() *cobra.Command {
 		Short: "Create objects",
 		RunE:  runner.run,
 	}
-	result.AddCommand(clusterorder.Cmd())
+	result.AddCommand(cluster.Cmd())
+	result.AddCommand(hub.Cmd())
 	flags := result.Flags()
 	flags.StringVarP(
 		&runner.fileName,
@@ -87,6 +89,7 @@ func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
 	helper, err := reflection.NewHelper().
 		SetLogger(c.logger).
 		SetConnection(c.conn).
+		AddPackages(cfg.Packages()...).
 		Build()
 	if err != nil {
 		return fmt.Errorf("failed to create reflection tool: %w", err)

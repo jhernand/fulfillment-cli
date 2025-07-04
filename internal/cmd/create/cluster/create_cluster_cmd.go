@@ -11,7 +11,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 language governing permissions and limitations under the License.
 */
 
-package clusterorder
+package cluster
 
 import (
 	"fmt"
@@ -20,21 +20,21 @@ import (
 
 	"github.com/spf13/cobra"
 
-	fulfillmentv1 "github.com/innabox/fulfillment-cli/internal/api/fulfillment/v1"
+	ffv1 "github.com/innabox/fulfillment-cli/internal/api/fulfillment/v1"
 	"github.com/innabox/fulfillment-cli/internal/config"
 )
 
 func Cmd() *cobra.Command {
 	runner := &runnerContext{}
 	result := &cobra.Command{
-		Use:   "clusterorder [flags]",
-		Short: "Create a cluster order",
+		Use:   "cluster [flags]",
+		Short: "Create a cluster",
 		RunE:  runner.run,
 	}
 	flags := result.Flags()
 	flags.StringVar(
-		&runner.templateId,
-		"template-id",
+		&runner.template,
+		"template",
 		"",
 		"Template identifier",
 	)
@@ -42,7 +42,7 @@ func Cmd() *cobra.Command {
 }
 
 type runnerContext struct {
-	templateId string
+	template string
 }
 
 func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
@@ -59,8 +59,8 @@ func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Check that we have a template:
-	if c.templateId == "" {
-		return fmt.Errorf("template-id is required")
+	if c.template == "" {
+		return fmt.Errorf("template identifier is required")
 	}
 
 	// Create the gRPC connection from the configuration:
@@ -70,27 +70,27 @@ func (c *runnerContext) run(cmd *cobra.Command, args []string) error {
 	}
 
 	// Create the client for the cluster orders service:
-	client := fulfillmentv1.NewClusterOrdersClient(conn)
+	client := ffv1.NewClustersClient(conn)
 
-	// Prepare the order:
-	order := &fulfillmentv1.ClusterOrder{
-		Spec: &fulfillmentv1.ClusterOrderSpec{
-			TemplateId: c.templateId,
-		},
-	}
+	// Prepare the cluster:
+	cluster := ffv1.Cluster_builder{
+		Spec: ffv1.ClusterSpec_builder{
+			Template: c.template,
+		}.Build(),
+	}.Build()
 
-	// Create the order:
-	response, err := client.Create(ctx, &fulfillmentv1.ClusterOrdersCreateRequest{
-		Object: order,
-	})
+	// Create the cluster:
+	response, err := client.Create(ctx, ffv1.ClustersCreateRequest_builder{
+		Object: cluster,
+	}.Build())
 	if err != nil {
-		return fmt.Errorf("failed to create order: %w", err)
+		return fmt.Errorf("failed to create: %w", err)
 	}
 
 	// Display the result:
-	order = response.Object
+	cluster = response.Object
 	writer := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-	fmt.Fprintf(writer, "ID: %s\n", order.Id)
+	fmt.Fprintf(writer, "ID: %s\n", cluster.Id)
 	writer.Flush()
 
 	return nil

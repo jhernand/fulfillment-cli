@@ -16,7 +16,7 @@ package describe
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/innabox/fulfillment-cli/internal/cmd/describe/clusterorder"
+	"github.com/innabox/fulfillment-cli/internal/cmd/describe/cluster"
 )
 
 func Cmd() *cobra.Command {
@@ -24,6 +24,6 @@ func Cmd() *cobra.Command {
 		Use:   "describe",
 		Short: "Describe a resource",
 	}
-	result.AddCommand(clusterorder.Cmd())
+	result.AddCommand(cluster.Cmd())
 	return result
 }

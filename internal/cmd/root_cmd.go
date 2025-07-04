@@ -15,6 +15,7 @@ package cmd
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -28,6 +29,7 @@ import (
 	"github.com/innabox/fulfillment-cli/internal/cmd/login"
 	"github.com/innabox/fulfillment-cli/internal/cmd/logout"
 	"github.com/innabox/fulfillment-cli/internal/logging"
+	"github.com/innabox/fulfillment-cli/internal/terminal"
 )
 
 func Root() *cobra.Command {
@@ -88,12 +90,21 @@ func (c *runnerContext) persistentPreRun(cmd *cobra.Command, args []string) erro
 		SetFlags(cmd.Flags()).
 		Build()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create logger: %w", err)
 	}
 
-	// Replace the default context with one that contains the logger:
+	// Create the console:
+	console, err := terminal.NewConsole().
+		SetLogger(logger).
+		Build()
+	if err != nil {
+		return fmt.Errorf("failed to create console: %w", err)
+	}
+
+	// Replace the default context with one that contains the logger and the console:
 	ctx := cmd.Context()
 	ctx = logging.LoggerIntoContext(ctx, logger)
+	ctx = terminal.ConsoleIntoContext(ctx, console)
 	cmd.SetContext(ctx)
 
 	return nil

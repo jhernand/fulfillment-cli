@@ -23,10 +23,16 @@ import (
 	"sync"
 
 	"github.com/gertd/go-pluralize"
+	"golang.org/x/exp/maps"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/reflect/protoregistry"
+
+	// This is needed to ensure that the types and services are loaded into the protocol buffers registry, otherwise
+	// they will be visible only if they are explicitly used in some part of the code.
+	_ "github.com/innabox/fulfillment-cli/internal/api/fulfillment/v1"
+	_ "github.com/innabox/fulfillment-cli/internal/api/private/v1"
 )
 
 // Frequently used names:
@@ -51,6 +57,7 @@ const (
 type HelperBuilder struct {
 	logger     *slog.Logger
 	connection *grpc.ClientConn
+	packages   []string
 }
 
 // Helper simplifies use of the protocol buffers reflection facility. It knows how to extract from the descriptors the
@@ -61,6 +68,7 @@ type HelperBuilder struct {
 type Helper struct {
 	logger     *slog.Logger
 	connection *grpc.ClientConn
+	packages   map[protoreflect.FullName]bool
 	scanOnce   *sync.Once
 	pluralizer *pluralize.Client
 	helpers    []ObjectHelper
@@ -83,6 +91,18 @@ func (b *HelperBuilder) SetConnection(value *grpc.ClientConn) *HelperBuilder {
 	return b
 }
 
+// AddPackage adds a protobuf package that will be scanned looking for types and services.
+func (b *HelperBuilder) AddPackage(value string) *HelperBuilder {
+	b.packages = append(b.packages, value)
+	return b
+}
+
+// AddPackages adds a list of protobuf packages that will be scanned looking for types and services.
+func (b *HelperBuilder) AddPackages(values ...string) *HelperBuilder {
+	b.packages = append(b.packages, values...)
+	return b
+}
+
 // Build uses the data stored in the builder to create a new reflection helper.
 func (b *HelperBuilder) Build() (result *Helper, err error) {
 	// Check the parameters:
@@ -94,13 +114,24 @@ func (b *HelperBuilder) Build() (result *Helper, err error) {
 		err = errors.New("gRPC connection is mandatory")
 		return
 	}
+	if len(b.packages) == 0 {
+		err = errors.New("at least one package is mandatory")
+		return
+	}
 
 	// Create the pluralizer:
 	pluralizer := pluralize.NewClient()
 
+	// Prepare the set of packages:
+	packages := make(map[protoreflect.FullName]bool, len(b.packages))
+	for _, name := range b.packages {
+		packages[protoreflect.FullName(name)] = true
+	}
+
 	// Create and populate the object:
 	result = &Helper{
 		logger:     b.logger,
+		packages:   packages,
 		connection: b.connection,
 		pluralizer: pluralizer,
 		scanOnce:   &sync.Once{},
@@ -117,9 +148,25 @@ func (h *Helper) scanIfNeeded() {
 
 func (h *Helper) scan() {
 	protoregistry.GlobalFiles.RangeFiles(h.scanFile)
+	sort.Slice(
+		h.helpers,
+		func(i, j int) bool {
+			nameI := h.helpers[i].descriptor.FullName()
+			nameJ := h.helpers[j].descriptor.FullName()
+			return nameI < nameJ
+		},
+	)
 }
 
 func (h *Helper) scanFile(fileDesc protoreflect.FileDescriptor) bool {
+	if !h.packages[fileDesc.Package()] {
+		h.logger.Debug(
+			"Ignoring file because it isn't in the list enabled packages",
+			slog.String("file", fileDesc.Path()),
+			slog.String("package", string(fileDesc.Package())),
+		)
+		return true
+	}
 	h.logger.Debug(
 		"Scanning file",
 		slog.String("file", fileDesc.Path()),
@@ -348,13 +395,25 @@ func (h *Helper) getItemsField(messageDesc protoreflect.MessageDescriptor) proto
 	return fieldDesc
 }
 
-// Singulars returns the object types in singular. The results are in lower case and sorted alphabetically.
-func (h *Helper) Singulars() []string {
+// Names resturns the full names of the object types. The results are sorted alphabetically.
+func (h *Helper) Names() []string {
 	h.scanIfNeeded()
 	results := make([]string, len(h.helpers))
 	for i, objectInfo := range h.helpers {
-		results[i] = objectInfo.singular
+		results[i] = string(objectInfo.descriptor.FullName())
 	}
+	sort.Strings(results)
+	return results
+}
+
+// Singulars returns the object types in singular. The results are in lower case and sorted alphabetically.
+func (h *Helper) Singulars() []string {
+	h.scanIfNeeded()
+	set := make(map[string]bool, len(h.helpers))
+	for _, objectInfo := range h.helpers {
+		set[objectInfo.singular] = true
+	}
+	results := maps.Keys(set)
 	sort.Strings(results)
 	return results
 }
@@ -362,10 +421,11 @@ func (h *Helper) Singulars() []string {
 // Plurals the object types in plural. The reusults are in lower case an sorted alphabetically.
 func (h *Helper) Plurals() []string {
 	h.scanIfNeeded()
-	results := make([]string, len(h.helpers))
-	for i, objectInfo := range h.helpers {
-		results[i] = objectInfo.plural
+	set := make(map[string]bool, len(h.helpers))
+	for _, objectInfo := range h.helpers {
+		set[objectInfo.plural] = true
 	}
+	results := maps.Keys(set)
 	sort.Strings(results)
 	return results
 }
