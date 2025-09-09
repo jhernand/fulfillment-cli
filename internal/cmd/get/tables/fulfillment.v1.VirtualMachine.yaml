@@ -14,12 +14,12 @@
 columns:
 
 - header: ID
-  value: id
+  value: this.id
   width: 100
 
 - header: TEMPLATE
-  value: spec.template
+  value: this.spec.template
 
 - header: STATE
-  value: status.state
+  value: this.status.state
   type: fulfillment.v1.VirtualMachineState

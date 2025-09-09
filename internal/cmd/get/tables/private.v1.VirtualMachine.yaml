@@ -16,8 +16,12 @@ columns:
 - header: ID
   value: this.id
 
-- header: TITLE
-  value: this.title
+- header: TEMPLATE
+  value: this.spec.template
 
-- header: DESCRIPTION
-  value: this.description
+- header: STATE
+  value: this.status.state
+  type: fulfillment.v1.ClusterState
+
+- header: HUB
+  value: this.status.hub
